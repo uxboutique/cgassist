@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CGAssist · Prototipo navigabile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --page-bg:#ECEEF2; --page-text:#2B2E35; --page-muted:#6B707C; --page-card:#FFFFFF; --page-line:#D9DCE3;
+  --blue:#375ECC; --blue-d:#2C4FB3; --blue-50:#EEF2FC; --blue-100:#DCE4F8; --bar-base:#AFC0E6;
+  --text:#3B3B3B; --muted:#717171; --line:#E2E6F2; --track:#EEF0F5; --ph:#717171; --grab:#B8BFD3; --red2:#C8372D; --bg:#F6F8FF; --white:#FFFFFF;
+  --green:#058733; --green-bg:#E7F4EC; --orange:#B3610B; --orange-dot:#CA720E; --orange-bg:#FBF1E6;
+  --red:#B50505; --disabled:#F5F5F5; --disabled-text:#717171; --ink:#21211F;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page-bg:#15171C; --page-text:#E7E9EE; --page-muted:#9AA0AC; --page-card:#1F2229; --page-line:#2E323B; }
+}
+:root[data-theme="dark"]{ --page-bg:#15171C; --page-text:#E7E9EE; --page-muted:#9AA0AC; --page-card:#1F2229; --page-line:#2E323B; }
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;margin:0;background:var(--page-bg);color:var(--page-text);
+  font-family:'Montserrat','Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input{font:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* ---------- stage + device frame ---------- */
+.stage{height:100%;display:flex;align-items:center;justify-content:center;gap:64px;padding:24px}
+.side{width:300px;flex:none}
+.side .brand{display:flex;align-items:center;gap:10px;color:var(--blue);margin-bottom:6px}
+.side .brand svg{width:150px;height:auto}
+.side h2{font-size:15px;font-weight:600;margin:0 0 18px;color:var(--page-muted)}
+.side p{font-size:13.5px;line-height:1.55;margin:0 0 12px;max-width:34ch}
+.side .acts{display:flex;flex-direction:column;gap:10px;margin-top:22px}
+.side .sbtn{height:44px;border-radius:22px;border:1.5px solid var(--page-line);background:var(--page-card);color:var(--page-text);
+  font-weight:600;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;transition:border-color .2s,transform .12s}
+.side a.sbtn{text-decoration:none}
+.side .sbtn:hover{border-color:var(--blue)}
+.side .sbtn:active{transform:scale(.98)}
+.side .sbtn.warn{border-color:var(--orange);color:var(--orange)}
+.side .fine{font-size:12px;color:var(--page-muted);margin-top:18px}
+.dwrap{position:relative;flex:none;width:calc(424px * var(--s,1));height:calc(878px * var(--s,1))}
+.device{position:absolute;left:0;top:0;width:424px;height:878px;transform:scale(var(--s,1));transform-origin:0 0;
+  border-radius:68px;padding:6px;
+  background:linear-gradient(135deg,#FAFAFB 0%,#C9CCD2 18%,#F2F3F5 38%,#B8BBC2 62%,#ECEDF0 82%,#C4C7CD 100%);
+  box-shadow:0 0 0 1px #A9ADB4 inset,0 2px 1px rgba(255,255,255,.7) inset,0 40px 70px -20px rgba(20,24,35,.35),0 10px 24px rgba(20,24,35,.12)}
+.device .key{position:absolute;width:5px;border-radius:3px;background:linear-gradient(90deg,#B4B7BE,#E9EAED,#B4B7BE)}
+.device .k1{left:-4px;top:150px;height:34px}.device .k2{left:-4px;top:210px;height:64px}.device .k3{left:-4px;top:290px;height:64px}.device .k4{right:-4px;top:240px;height:96px}
+.bezel{width:100%;height:100%;background:#08090B;border-radius:62px;padding:11px}
+.screen{position:relative;width:390px;height:844px;border-radius:52px;overflow:hidden;background:var(--bg);isolation:isolate;
+  color:var(--text);font-size:14px;transform:translateZ(0)}
+.stage.full{padding:0;gap:0}
+.stage.full .side{display:none}
+.stage.full .dwrap{width:100%;height:100%}
+.stage.full .device{position:static;width:100%;height:100%;transform:none;border-radius:0;padding:0;background:none;box-shadow:none}
+.stage.full .device .key{display:none}
+.stage.full .bezel{border-radius:0;padding:0;background:var(--blue)}
+.stage.full .screen{width:100%;height:100%;border-radius:0}
+.stage.full .sb{display:none}
+html.full-mode,html.full-mode body{background:linear-gradient(var(--blue) 50%,#fff 50%)}
+.stage.full .hdr{padding-top:12px}
+.stage.full .hero{padding-top:21px}
+
+/* ---------- views ---------- */
+.view{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);will-change:transform}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;overscroll-behavior:contain}
+.scroll::-webkit-scrollbar{display:none}
+.sb{height:52px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 16px 3px 16px;
+  font-family:-apple-system,'SF Pro Text','Helvetica Neue',Arial,sans-serif;font-weight:600;font-size:16px;color:#fff;background:var(--blue)}
+.sb>span:first-child{width:54px;text-align:center;letter-spacing:-.32px}
+.sb .ico{display:flex;gap:6px;align-items:center;padding-bottom:0}
+.hdr{flex:none;background:var(--blue);color:#fff;padding:0 16px 20px}
+.hdr .sb{margin:0 -16px}
+.hdr .top{display:flex;align-items:center;justify-content:space-between;min-height:25px;margin-top:14px}
+.back,.saveexit{display:inline-flex;align-items:center;gap:4px;background:none;border:0;color:#fff;font-weight:500;font-size:14px;line-height:17px;padding:4px 0}
+.saveexit{margin-left:auto;gap:8px}
+.hdr .trow{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-top:14px}
+.hdr .trow .iconbtn{padding:0;margin-top:4px}
+.hdr h1{font-size:24px;line-height:29px;font-weight:700;margin:0;overflow-wrap:anywhere}
+.hdr .sub{font-size:14px;line-height:17px;margin-top:4px}
+.hdr .sub.sm{font-size:12px;line-height:15px;margin-top:2px}
+.iconbtn{background:none;border:0;color:inherit;padding:4px;display:grid;place-items:center;border-radius:50%}
+.stepper{margin-top:20px}
+.stepper .lab{display:flex;justify-content:space-between;font-size:12px;line-height:15px;font-weight:500;margin-bottom:8px}
+.segs{display:flex;gap:4px}
+.segs span{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.5);overflow:hidden}
+.segs span i{display:block;height:100%;width:0;background:#fff;border-radius:3px;transition:width .45s var(--ease)}
+.segs span.on i{width:100%}
+
+.body{padding:20px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.card{background:#fff;border-radius:12px;padding:18px}
+.card h3{font-size:16px;line-height:20px;font-weight:700;margin:0;color:var(--text)}
+.chead{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chead .cnt{font-size:13px;line-height:16px;font-weight:600;color:var(--muted)}
+.csegs{display:flex;gap:4px;margin:12px 0 0}
+.csegs span{flex:1;height:6px;border-radius:3px;background:var(--track);overflow:hidden}
+.csegs span i{display:block;height:100%;width:0;background:var(--blue);transition:width .5s var(--ease)}
+.csegs span.on i{width:100%}
+.muted{color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px}
+.between{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:16px;padding:0}
+.kvs{display:flex;flex-direction:column;gap:8px}
+.kv span:first-child{color:var(--muted)} .kv b{font-weight:600;text-align:right}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px;margin-top:16px}
+.grid2 small{display:block;font-size:12px;line-height:15px;color:var(--muted);margin-bottom:2px}
+.grid2 b{font-size:14px;line-height:17px;font-weight:600}
+
+/* buttons */
+.btn{height:52px;border-radius:26px;border:1.5px solid transparent;font-weight:500;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px;
+  flex:1;transition:transform .12s,background-color .2s,color .2s,border-color .2s,opacity .2s;white-space:nowrap;padding:0 18px}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--blue);color:#fff}
+.btn.primary:hover{background:var(--blue-d)}
+.btn.secondary{background:#fff;color:var(--blue);border-color:var(--blue)}
+.btn.danger{background:#fff;color:var(--red2);border-color:var(--red);height:45px;font-size:15px;font-weight:600}
+.btn[disabled]{background:var(--disabled);color:var(--disabled-text);border-color:transparent;pointer-events:none}
+.btn.ghost{background:#fff;color:var(--muted);border:1px solid var(--muted)}
+.btn.sm{height:37px;border-radius:100px;font-size:14px;font-weight:500;flex:none;padding:0 24px}
+.btn .spin{width:20px;height:20px;border-radius:50%;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite}
+.link{background:none;border:0;color:var(--blue);font-weight:500;font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:2px 0}
+.bb{flex:none;background:#fff;padding:14px 16px 30px;border-top:1px solid var(--line)}
+.bb.nob{border-top:0}
+.bb .btns{display:flex;gap:12px}
+.bb .cap{font-size:12px;line-height:15px;color:var(--muted);text-align:center;margin-top:12px}
+
+/* badges + status */
+.badge{display:inline-flex;align-items:center;gap:6px;height:27px;padding:0 10px 0 8px;border-radius:100px;border:1px solid currentColor;font-size:12px;line-height:15px;font-weight:600;background:#fff;white-space:nowrap}
+.badge.wip{height:25px}
+.badge i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.badge.ok{color:var(--green)} .badge.wip{color:var(--orange)}
+.metaline{font-size:12px;line-height:16px;color:var(--muted)}
+.st{display:flex;align-items:center;gap:6px;font-size:12px;line-height:16px;color:var(--muted);padding-top:2px}
+.st i{width:8px;height:8px;border-radius:50%;background:var(--orange-dot);flex:none}
+.st.ok i{background:#0DA30A}
+.st b{color:var(--text);font-weight:500;margin-left:-4px}
+.c-ok{color:var(--green)} .c-wip{color:var(--orange)} .c-bad{color:var(--red)}
+
+/* module rows */
+.mrows{margin-top:16px;display:flex;flex-direction:column;gap:4px}
+.mrow{width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:14px 0;min-height:64px}
+.mrow .ck{width:32px;height:32px;color:var(--green);flex:none;animation:pop .4s var(--ease)}
+.mrow .tx{flex:1;min-width:0}
+.mrow b{display:block;font-size:15px;line-height:18px;font-weight:600}
+.mrow .s1{display:block;font-size:12px;line-height:15px;font-weight:500;color:var(--muted);margin-top:2px}
+.mrow .s1.done{color:var(--green);font-weight:500}
+.mrow .s1.part{color:var(--orange);font-weight:500}
+.mrow small{display:block;font-size:10px;line-height:12px;color:var(--muted);margin-top:8px}
+.mrow small b{display:inline;font-size:10px;line-height:12px;font-weight:700;color:var(--muted)}
+.mrow .chev{color:var(--blue);flex:none}
+.lockline{display:flex;gap:10px;font-size:13px;color:var(--muted);margin-top:12px;line-height:19px}
+.lockline svg{flex:none;margin-top:2px}
+
+/* form */
+.field{display:flex;flex-direction:column;gap:6px}
+.field>label,.flabel{font-size:13px;line-height:16px;font-weight:500;color:var(--text)}
+.box{height:48px;border:1px solid var(--line);border-radius:10px;background:#fff;display:flex;align-items:center;gap:8px;padding:0 14px;transition:border-color .2s,box-shadow .2s}
+.box:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,94,204,.14)}
+.box input{border:0;outline:0;background:transparent;flex:1;min-width:0;width:100%;font-size:15px;color:var(--text)}
+.box input::placeholder{color:var(--ph)}
+.box .unit{font-size:14px;color:var(--muted);flex:none}
+.box.ro{background:#EEF0F5;color:var(--muted);font-size:15px}
+.box.sel{justify-content:space-between;cursor:pointer;width:100%;font-size:15px;text-align:left}
+.box.sel .ph{color:var(--ph)}
+.box.sel svg{color:var(--blue);transition:transform .25s var(--ease)}
+.box.sel.open svg{transform:rotate(180deg)}
+.dd{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s var(--ease);margin-top:-6px}
+.dd.open{grid-template-rows:1fr}
+.dd>div{overflow:hidden}
+.dd ul{list-style:none;margin:6px 0 0;padding:6px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.dd li button{width:100%;text-align:left;background:none;border:0;padding:11px 10px;border-radius:8px;font-size:14px}
+.dd li button:hover,.dd li button.on{background:var(--blue-50);color:var(--blue);font-weight:600}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:end}
+.fgrid.g8{gap:8px}
+.fgrid>*{min-width:0}
+input[type=date]{color:var(--text)}
+input[type=date]::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer}
+
+/* date picker */
+.box.datef span{font-size:15px}
+.box.datef svg{color:var(--blue)}
+.calnav{display:flex;align-items:center;justify-content:space-between;margin-top:20px}
+.calnav b{font-size:16px;font-weight:700;text-transform:capitalize}
+.calnav button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--blue);display:grid;place-items:center;transition:background-color .15s,opacity .2s}
+.calnav button:hover{background:var(--blue-50)}
+.calnav button[disabled]{opacity:.3;pointer-events:none}
+.calwd{display:grid;grid-template-columns:repeat(7,1fr);margin-top:16px;font-size:12px;font-weight:600;color:var(--muted);text-align:center}
+.calwrap{overflow:hidden}
+.caldays{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:44px;row-gap:2px;margin-top:6px;min-height:274px}
+.caldays button{width:42px;height:42px;justify-self:center;align-self:center;border-radius:50%;border:0;background:none;font-size:14px;font-weight:500;color:var(--text);transition:background-color .15s,color .15s}
+.caldays button:hover{background:var(--blue-50)}
+.caldays button.today{box-shadow:inset 0 0 0 1.5px var(--blue);color:var(--blue);font-weight:700}
+.caldays button.on{background:var(--blue);color:#fff;font-weight:700;box-shadow:0 4px 10px rgba(55,94,204,.3);animation:pop .3s var(--ease)}
+.caldays button[disabled]{color:#C9CDD5;pointer-events:none}
+/* options */
+.qtitle{font-size:16px;font-weight:600;margin:0 0 4px;line-height:20px}
+.opt{width:100%;min-height:46px;border:1px solid var(--line);border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;text-align:left;font-size:14px;line-height:17px;transition:border-color .2s,box-shadow .2s,background-color .2s}
+.opt.on{border-color:var(--blue);box-shadow:0 0 0 .5px var(--blue) inset;font-weight:500}
+.opt.big{min-height:48px;padding:0 12px;font-size:15px}
+.opt.big.on{font-weight:600}
+.opt.left{justify-content:flex-start}
+.rd{width:20px;height:20px;border-radius:50%;border:2px solid var(--blue);position:relative;flex:none;background:#fff}
+.on>.rd,.rd.on{border-width:1.5px}
+.rd::after{content:'';position:absolute;inset:2px;border-radius:50%;background:var(--blue);transform:scale(0);transition:transform .25s cubic-bezier(.3,1.7,.5,1)}
+.on>.rd::after,.rd.on::after{transform:scale(1)}
+.cb{width:18px;height:18px;border-radius:3px;border:2px solid var(--blue);display:grid;place-items:center;flex:none;transition:background-color .15s;background:#fff}
+.cb svg{color:#fff;transform:scale(0);transition:transform .25s cubic-bezier(.3,1.7,.5,1)}
+.on>.cb,.on .cb{background:var(--blue)}
+.on>.cb svg,.on .cb svg{transform:scale(1)}
+.yn{display:flex;align-items:center;gap:8px}
+.yn button{display:flex;align-items:center;gap:8px;background:none;border:0;padding:8px;border-radius:8px;font-size:14px;line-height:17px;color:var(--text)}
+.yn button.on{color:var(--text);font-weight:600}
+.badlrow{background:#fff;border:1px solid var(--line);border-radius:12px;min-height:54px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px 8px 16px;font-size:15px;line-height:18px;font-weight:500;transition:border-color .2s}
+.badlrow.done{border-color:var(--line)}
+.qcard{background:#fff;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.qcard .qh{display:flex;flex-direction:column;gap:2px;margin-bottom:4px}
+.qcard h4{margin:0;font-size:16px;line-height:20px;font-weight:600}
+.qcard .qs{font-size:13px;line-height:19px;color:var(--muted)}
+.qsub{font-size:14px;line-height:20px;font-weight:600;margin-top:4px}
+.qgroup{display:flex;flex-direction:column;gap:12px;padding:0 12px}
+.qgroup .opts{display:flex;flex-direction:column;gap:10px}
+.scorebar{display:flex;justify-content:space-between;align-items:center;padding:8px 0 0;font-size:14px;font-weight:500;line-height:17px;color:var(--muted)}
+.scorebar b{font-size:20px;line-height:24px;font-weight:700;color:var(--text);display:inline-block}
+.bump{animation:bump .45s var(--ease)}
+.body.g10{gap:10px;padding-top:24px}.body.g10 .scorebar{padding-top:10px}.body.g10 .agecard{margin-top:10px}
+.body.g20{gap:20px}.body.g20 .scorebar{padding-top:0}
+.body.g20 .qcard .field+div .chrono{margin-top:0}
+.chrono{display:inline-flex;align-items:center;gap:4px;background:none;border:0;color:var(--blue);font-weight:500;font-size:14px;line-height:17px;padding:4px 0}
+.chrono.run{color:var(--red)}
+.chrono.run svg{animation:spin 2s linear infinite}
+.expand{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s var(--ease)}
+.expand.open{grid-template-rows:1fr}
+.expand>div{overflow:hidden}
+.optgroup{border:1px solid var(--line);border-radius:10px;background:#fff;transition:border-color .2s}
+.optgroup.on{border-color:var(--blue);box-shadow:0 0 0 .5px var(--blue) inset}
+.optgroup .opt{border:0;box-shadow:none}
+.optgroup .inner{border-top:1px solid #D0D4DE;margin:0 14px;padding:12px 0 12px}
+.agecard{background:#fff;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px}
+/* "Nessuna delle precedenti": separata dalla lista */
+.opt.none{margin-top:20px}
+.body .opt.none+.agecard{margin-top:20px}
+.body .opt.none~.scorebar{padding-top:20px}
+/* riga con toggle SÌ/NO (eseguibile / eseguito) */
+.tgrow{width:100%;min-height:49px;border:1px solid var(--line);border-radius:10px;background:#fff;display:flex;align-items:center;gap:12px;padding:12px 14px;text-align:left;font-size:14px;line-height:17px;color:var(--text)}
+.tgrow>span:first-child{flex:1;min-width:0}
+.tg{position:relative;flex:none;width:49px;height:23px;border-radius:48px;background:var(--blue);transition:background-color .2s}
+.tg i{position:absolute;top:5.5px;left:31px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .25s var(--ease)}
+.tg b{position:absolute;top:4px;left:6px;width:21px;font-size:12px;line-height:15px;font-weight:500;color:#fff;text-align:center;transition:left .25s var(--ease)}
+.tg.off{background:var(--text)}
+.tg.off i{left:6px}
+.tg.off b{left:22px}
+.qcard .tbody{display:flex;flex-direction:column;gap:14px;margin-top:16px}
+/* campi disabilitati (test non eseguibile / esame non eseguito) */
+.field.dis>label,.field.dis>.flabel{color:var(--muted)}
+.field.dis .box{background:#EEF0F5;pointer-events:none}
+.field.dis .box input{color:var(--muted)}
+.field.dis .box.datef svg{color:var(--muted)}
+.chrono[disabled]{color:var(--muted);pointer-events:none}
+.agecard .between>span{font-size:16px;line-height:20px}
+.agecard .between b{color:var(--blue);font-size:14px;font-weight:700}
+.agecard .metaline{font-size:12px;line-height:17px}
+
+/* notes */
+.nota{display:flex;gap:10px;align-items:center;border:1px solid var(--blue);border-radius:10px;padding:8px;font-size:10px;line-height:16px;text-align:left;background:#fff;color:var(--text)}
+.nota svg{flex:none;color:var(--blue)}
+.nota.warn{border-color:var(--orange)} .nota.warn svg{color:var(--orange)}
+
+/* lists */
+.pcard{background:#fff;border-radius:10px;padding:12px 16px;display:grid;grid-template-columns:1fr auto;row-gap:14px;column-gap:12px}
+.pcard .code{font-size:14px;line-height:20px;font-weight:700}
+.pcard .pat{font-size:12px;line-height:16px;color:var(--muted);margin-top:4px}
+.pcard .share{grid-column:2;grid-row:1;justify-self:end;color:var(--blue)}
+.pcard .meta{grid-column:1;grid-row:2;display:flex;flex-direction:column;gap:4px;align-self:end}
+.pcard .meta .metaline.alert{color:var(--orange);font-weight:600}
+.pcard .act{grid-column:2;grid-row:2;align-self:end}
+.sechead{display:flex;justify-content:space-between;align-items:center;margin:10px 0 0}
+.sechead h2{font-size:18px;font-weight:700;margin:0}
+.grouplab{font-size:11px;line-height:13px;font-weight:500;color:var(--muted);letter-spacing:0;margin:8px 0 -6px}
+.listhead{font-size:18px;line-height:20px;font-weight:700;letter-spacing:-.15px;margin:16px 0 4px}
+.empty{background:#fff;border-radius:12px;padding:22px 18px;text-align:center;color:var(--muted);font-size:13px;line-height:1.5}
+.empty .link{display:inline-block;margin-top:8px}
+
+/* home (da frame Figma "03 Home") */
+.hero{background:var(--blue);padding:19px 16px 51px;color:#fff}
+.hero .logo{width:112px;height:20px;display:block}
+.hero .logo svg{width:112px;height:20px;display:block}
+.hero h1{font-size:30px;line-height:28px;font-weight:700;letter-spacing:-.44px;margin:41px 0 4px}
+.hero .c{font-size:16px;line-height:20px;letter-spacing:-.15px}
+.newcard{position:relative;margin-top:24px;background:#fff;color:var(--text);border-radius:20px;padding:25px 20px 40px;text-align:center}
+.newcard b{font-size:18px;line-height:20px;font-weight:700;letter-spacing:-.15px;display:block}
+.newcard span{font-size:14px;line-height:18px;color:var(--muted);display:block;margin:9px auto 0;max-width:250px}
+.newcard .plus{position:absolute;left:50%;bottom:-26px;transform:translateX(-50%);width:48px;height:48px;border-radius:50%;background:#fff;border:3px solid var(--blue);
+  color:var(--blue);display:grid;place-items:center;padding:0;transition:transform .2s var(--ease)}
+.newcard .plus:active{transform:translateX(-50%) scale(.92)}
+.homebody{padding:29px 16px 110px;display:flex;flex-direction:column;gap:24px}
+.hsec{display:flex;flex-direction:column;gap:16px}
+.hlist{display:flex;flex-direction:column;gap:12px}
+.hsec .sechead{margin:0}
+.hsec .sechead h2{font-size:18px;line-height:20px;letter-spacing:-.15px}
+.hsec .sechead .link{font-weight:500}
+/* nav (da componente Figma "Bottom Nav") */
+.nav{position:absolute;left:16px;right:16px;bottom:22px;height:60px;z-index:30;transition:transform .35s var(--ease),opacity .25s}
+.nav.hide{transform:translateY(130%);opacity:0;pointer-events:none}
+.nav .nbg{position:absolute;left:0;right:0;top:12px;bottom:0;border-radius:60px;background:var(--blue)}
+.nav .nrow{position:absolute;inset:0;display:flex;justify-content:center;align-items:flex-start;gap:40px}
+.nav .grp{width:84px;display:flex;gap:32px;margin-top:24px}
+.nav .ni{position:relative;width:24px;height:24px;padding:0;border:0;background:none;color:#fff;display:block}
+.nav .ni::before{content:'';position:absolute;inset:-10px}
+.nav .ni svg{position:absolute;inset:0;transition:opacity .2s,transform .25s var(--ease)}
+.nav .ni .f{opacity:0;transform:scale(.8)}
+.nav .ni.on .o{opacity:0}
+.nav .ni.on .f{opacity:1;transform:none}
+.nav .ni::after{content:'';position:absolute;top:25px;left:10px;width:4px;height:4px;border-radius:50%;background:#fff;transform:scale(0);transition:transform .3s cubic-bezier(.3,1.7,.5,1)}
+.nav .ni.on::after{transform:scale(1)}
+.nav .nadd{width:48px;height:48px;border-radius:50%;background:#fff;border:3px solid var(--blue);display:grid;place-items:center;padding:0;flex:none;transition:transform .15s}
+.nav .nadd:active{transform:scale(.92)}
+/* search + chips */
+.searchrow{display:flex;gap:10px;align-items:center}
+.search{flex:1;height:48px;border-radius:24px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 14px;color:var(--muted)}
+.search input{border:0;outline:0;flex:1;font-size:14px;background:transparent;color:var(--text);min-width:0}
+.search input::placeholder{color:var(--ph)}
+.fbtn{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--blue);background:#fff;color:var(--blue);display:grid;place-items:center;position:relative;flex:none}
+.fbtn .dot{position:absolute;top:8px;right:9px;width:9px;height:9px;border-radius:50%;background:var(--orange-dot);border:2px solid #fff}
+.chips{display:flex;gap:24px;margin-top:4px}
+.chips::-webkit-scrollbar{display:none}
+.chip{height:40px;border-radius:100px;border:1px solid var(--line);background:#fff;padding:0 14px;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;flex:1;transition:background-color .2s,color .2s,border-color .2s}
+.chip.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
+
+/* results */
+.acc{background:#fff;border-radius:12px;padding:16px}
+.acc .ah{width:100%;display:flex;align-items:flex-start;gap:12px;background:none;border:0;text-align:left;padding:0}
+.acc .ah .ai{flex:none;width:32px;height:32px}
+.acc .ah .at{flex:1}
+.acc .over{font-size:10px;line-height:12px;color:var(--muted);margin-bottom:8px}
+.acc .ttl{font-size:17px;font-weight:700;line-height:1.25}
+.acc .s{font-size:13px;margin-top:2px}
+.acc .s2{font-size:11px;color:var(--muted);margin-top:6px}
+.acc .chev{color:var(--blue);transition:transform .3s var(--ease);flex:none;margin-top:4px}
+.acc.open .chev{transform:rotate(180deg)}
+.acc .ab{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s var(--ease)}
+.acc.open .ab{grid-template-rows:1fr}
+.acc .ab>div{overflow:hidden}
+.acc .rows{border-top:1px solid var(--line);margin-top:14px;padding-top:4px}
+.frow{display:flex;justify-content:space-between;align-items:center;padding:0;gap:10px}
+.frow>div{display:flex;flex-direction:column;gap:4px}
+.frow b{display:block;font-size:14px;line-height:17px;font-weight:600}
+.frow small{font-size:12px;line-height:16px;color:var(--muted)}
+.frow .v{font-size:12px;line-height:15px;color:var(--muted);text-align:right;white-space:nowrap}
+.crow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:0;font-size:14px;line-height:17px;font-weight:600}
+.crow span:last-child{color:var(--muted);font-size:12px;font-weight:400}
+.foot{text-align:center;font-size:12px;color:var(--muted);line-height:15px;padding:4px 16px 8px}
+.foot b{color:var(--muted);font-weight:500}
+.stagger>*{animation:rise .55s var(--ease) both}
+.stagger>*:nth-child(2){animation-delay:.08s}.stagger>*:nth-child(3){animation-delay:.16s}.stagger>*:nth-child(4){animation-delay:.24s}
+.stagger>*:nth-child(5){animation-delay:.32s}.stagger>*:nth-child(6){animation-delay:.4s}.stagger>*:nth-child(7){animation-delay:.46s}
+
+/* patient */
+.rprof{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;font-size:12px;line-height:16px;margin-top:4px}
+.rprof b{font-size:12px;font-weight:500;line-height:16px;display:inline}
+.rprof .sep,.rprof span:last-child{color:var(--muted)}
+.rescard{background:#fff;border-radius:12px;padding:18px}
+.rescard h3{line-height:20px}
+.rescard h3{font-size:16px;font-weight:700;margin:0}
+.rgroup{background:#fff;border-radius:12px;padding:18px}
+.rgroup .acc{padding:0;border-radius:0}
+.rgroup .acc+.acc{border-top:1px solid var(--line);margin-top:20px;padding-top:20px}
+.rgroup .acc.open .ah{padding-bottom:14px;border-bottom:1px solid var(--line)}
+.rgroup .acc .ttl{font-size:16px;line-height:20px}
+.rgroup .acc .ttl.l21{line-height:21px}
+.rgroup .acc.gass .ttl{font-size:18px;line-height:22px}
+.rgroup .acc .s{font-size:12px;line-height:15px;font-weight:500;color:var(--text);margin-top:2px}
+.rgroup .acc .s.muted{color:var(--muted)}
+.rgroup .acc .over{font-size:10px}
+.rgroup .acc .s2{font-size:10px;line-height:12px;margin-top:8px}
+.rgroup .acc .chev{align-self:center;margin-top:0}
+.rgroup .acc .rows{border-top:0;margin-top:0;padding:12px 0 14px;display:flex;flex-direction:column;gap:12px}
+.resfoot{background:#fff;margin:0 -16px -24px;padding:20px 16px 14px}
+.resfoot .foot{padding:0}
+.bb.flat{border-top:0;padding-top:14px}
+.btn.off{background:#F5F5F5;color:var(--muted);border-color:#F5F5F5;pointer-events:none}
+.ind{background:#fff;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:2px}
+.ind h3{font-size:16px;line-height:21px;font-weight:700;margin:0}
+.ind p{font-size:12px;line-height:15px;color:var(--muted);margin:0}
+.bb .nota{margin-bottom:10px}
+.prisk{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 0 9px}
+.prisk small{font-size:12px;line-height:16px;color:var(--muted)}
+.prisk .pv{display:flex;align-items:center;gap:4px;font-size:16px;line-height:20px;font-weight:600}
+.prisk .pv svg{width:20px;height:20px;flex:none}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:20px}
+.card.pad16{padding:16px}
+.tile{border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:2px}
+.tile small{font-size:11px;line-height:13px;color:var(--muted);display:block}
+.tile b{font-size:22px;line-height:27px;font-weight:700;display:block;margin:0}
+.tile span{font-size:11px;line-height:13px;font-weight:400;color:var(--text)}
+.tl{margin-top:16px;display:flex;flex-direction:column;gap:20px}
+.tlrow{width:100%;display:flex;align-items:center;gap:12px;background:none;border:0;text-align:left;padding:0;position:relative}
+.tlrow .ic{width:30px;height:30px;color:var(--green);flex:none;position:relative;z-index:1;background:#fff;border-radius:50%}
+.tlrow .ic.dark{color:var(--muted)}
+.tlrow+.tlrow::before{content:'';position:absolute;left:7px;top:-31px;height:42px;width:2px;border-radius:10px;background:var(--line)}
+.tlrow .dot{width:16px;height:16px;border-radius:50%;background:var(--blue);flex:none;position:relative;z-index:1}
+.tlrow .dot.dark{background:var(--muted)}
+.tlrow .tx{flex:1;display:flex;flex-direction:column;gap:4px}
+.tlrow b{display:block;font-size:15px;line-height:18px;font-weight:700}
+.tlrow small{font-size:12px;line-height:17px;color:var(--muted)}
+.tlrow .chev{color:var(--blue)}
+.divider{height:1px;background:var(--line);margin:16px 0 0}
+
+/* compare */
+.cmp .between h3{font-size:16px}
+.delta{display:flex;align-items:center;gap:4px;font-size:12px;line-height:15px;font-weight:600}
+.delta.c-bad{color:var(--red2)}
+.cmp .sep{height:1px;background:var(--line);margin:24px 0}
+.bars{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.bar{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:10px;font-size:12px;line-height:15px;color:var(--muted)}
+.bar .tr{height:10px;border-radius:5px;background:var(--track);overflow:hidden}
+.bar .tr i{display:block;height:100%;width:0;border-radius:5px;background:var(--bar-base);transition:width .9s var(--ease)}
+.bar.fu .tr i{background:var(--blue)}
+.bar b{color:var(--text);font-size:13px;line-height:16px;text-align:right;min-width:37px}
+
+/* report */
+.paper{background:#fff;border-radius:12px;padding:20px 18px;box-shadow:0 1px 0 var(--line)}
+.paper .phead{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.paper .phead svg{width:118px;height:auto;color:var(--blue)}
+.paper .phead span{font-size:12px;color:var(--muted)}
+.paper h5{font-size:13px;color:var(--blue);font-weight:600;margin:16px 0 6px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rrow{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:13px}
+.rrow .l b{display:block;font-size:14px;font-weight:600}
+.rrow .l small{font-size:12px;color:var(--muted)}
+.rrow .r{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.paper p{font-size:13px;line-height:1.55;margin:4px 0 0}
+.paper .pfoot{font-size:11px;color:var(--muted);margin-top:16px;line-height:1.5}
+
+/* account */
+.prof{display:flex;align-items:center;gap:14px}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700;font-size:20px;flex:none}
+.card.prof{padding:16px}
+.prof b{font-size:17px;line-height:21px;font-weight:700;display:block}
+.prof small{display:block;font-size:13px;line-height:16px;color:var(--muted);margin-top:2px}
+.card.acct{padding:16px}
+.card.acct h3{margin-bottom:4px}
+.arow{width:100%;display:flex;align-items:center;gap:12px;background:none;border:0;padding:14px 0;text-align:left;font-size:14px;line-height:17px;font-weight:500;border-bottom:1px solid var(--line)}
+.arow:last-child{border-bottom:0}
+.card.acct .arow:last-child{border-bottom:1px solid var(--line)}
+.card.acct .arow.last{border-bottom:0}
+.stage.full .card.acct .arow.last{border-bottom:1px solid var(--line)}
+.card.acct .arow.onlyfull{border-bottom:0}
+.arow svg:first-child{color:var(--text)}
+.arow span{flex:1}
+.arow .chev{color:var(--blue)}
+.arow .vv{font-size:12px;font-weight:400;color:var(--muted)}
+.onlyfull{display:none}
+.stage.full .onlyfull{display:flex}
+
+/* overlays */
+.ov{position:absolute;inset:0;background:rgba(11,21,51,.5);opacity:0;transition:opacity .3s;z-index:60}
+.ov.in{opacity:1}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:61;background:#fff;border-radius:24px 24px 0 0;padding:10px 20px 34px;max-height:92%;overflow-y:auto;
+  transform:translateY(102%);transition:transform .42s var(--ease);scrollbar-width:none}
+.sheet.in{transform:none}
+.grab{width:40px;height:4px;border-radius:2px;background:var(--grab);margin:0 auto 16px}
+.sheet h2{font-size:20px;line-height:24px;font-weight:700;margin:0}
+.sheet .shs{font-size:14px;line-height:20px;color:var(--muted);margin-top:4px}
+.sheet .form{display:flex;flex-direction:column;gap:16px;margin-top:16px}
+.sheet .form.g24{gap:24px}
+.sheet .btns{display:flex;gap:12px;margin-top:16px}
+/* liberatoria (step 0 del censimento) */
+.consent{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:14px 16px;max-height:290px;overflow-y:auto;font-size:13px;line-height:19px;color:var(--text);scrollbar-width:thin}
+.consent h3{font-size:14px;line-height:18px;font-weight:600;margin:14px 0 4px}
+.consent h3:first-child{margin-top:0}
+.consent p{margin:0 0 8px}
+.consent p:last-child{margin-bottom:0}
+.sheet .opt.agree{margin-top:16px;align-items:flex-start;line-height:19px}
+.sheet .opt.agree .cb{margin-top:1px}
+.modal{position:absolute;left:24px;right:24px;top:50%;z-index:61;background:#fff;border-radius:20px;padding:24px 20px 20px;text-align:center;
+  transform:translateY(-46%) scale(.94);opacity:0;transition:transform .34s cubic-bezier(.2,.9,.3,1.15),opacity .22s}
+.modal.in{transform:translateY(-50%) scale(1);opacity:1}
+.modal h2{font-size:20px;font-weight:700;margin:12px 0 12px;line-height:24px}
+.modal p{font-size:14px;color:var(--muted);line-height:20px;margin:0}
+.modal .mbtns{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:32px}
+.modal .mbtns .link{font-size:16px;text-decoration:none;padding:4px 0}
+.modal .mbtns .btn{width:100%;flex:none}
+.circ{width:64px;height:64px;border-radius:50%;border:2.5px solid var(--blue);color:var(--blue);display:grid;place-items:center;margin:0 auto}
+.circ.ok{border-color:var(--green);color:var(--green)}
+.circ.red{border-color:var(--red);color:var(--red)}
+.circ.ok path{stroke-dasharray:24;stroke-dashoffset:24;animation:draw .55s .2s var(--ease) forwards}
+.codebox{border-radius:14px;padding:18px 16px;text-align:center;margin-top:32px;display:flex;flex-direction:column;gap:6px;align-items:center}
+.codebox small{font-size:11px;line-height:13px;font-weight:600;color:var(--muted);letter-spacing:.06em}
+.codebox .crow2{display:flex;align-items:center;gap:12px}
+.codebox .code{font-size:30px;line-height:37px;font-weight:700;color:var(--text);margin:0}
+.codebox .pname{letter-spacing:.9px;overflow-wrap:anywhere}
+.ferr{font-size:12px;line-height:16px;color:var(--red2);font-weight:500}
+.box.bad{border-color:var(--red2)}
+.box.bad:focus-within{box-shadow:0 0 0 3px rgba(200,55,45,.14)}
+.codebox .cp{background:none;border:0;padding:0;color:var(--blue);display:grid}
+.codebox .d{font-size:13px;line-height:16px;color:var(--text)}
+.codebox .link{margin-top:10px;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.calc{display:flex;flex-direction:column;gap:10px;margin:18px auto 4px;text-align:left;width:max-content}
+.calc div{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);transition:color .25s}
+.calc div.done{color:var(--text);font-weight:600}
+.calc .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;transition:all .25s}
+.calc div.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+.calc div.act .dot{border-color:var(--blue);border-top-color:transparent;animation:spin .7s linear infinite}
+.ring{width:56px;height:56px;margin:0 auto;border-radius:50%;border:4px solid var(--blue-100);border-top-color:var(--blue);animation:spin .9s linear infinite}
+
+/* 2fa + login */
+.loginhero{flex:none;background:var(--blue);color:#fff;text-align:center;padding:0 24px 48px}
+.loginhero .logo{width:213px;height:auto;margin:56px auto 0;display:block;animation:rise .8s var(--ease) both}
+.loginhero p{font-size:14px;line-height:20px;margin:16px 0 0;animation:rise .8s .1s var(--ease) both}
+.loginsheet{flex:1;background:#fff;border-radius:28px 28px 0 0;margin-top:0;padding:32px 24px;display:flex;flex-direction:column;position:relative}
+.loginsheet h2{font-size:24px;line-height:29px;font-weight:700;margin:0}
+.loginsheet .form{display:flex;flex-direction:column;gap:18px;margin-top:18px}
+.otp{display:flex;gap:8px;justify-content:center;margin-top:24px}
+.otp input{width:48px;height:58px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:center;font-size:22px;font-weight:700;color:var(--text);outline:0;transition:border-color .2s,box-shadow .2s,transform .15s}
+.otp input:focus{border:2px solid var(--blue);box-shadow:none}
+.otp input.fill{transform:none}
+.circ.lg{width:72px;height:72px;border-width:1.5px;background:#fff}
+.bb.flat0{background:transparent;border-top:0;padding:0 16px 24px}
+.otp.shake{animation:shake .4s}
+.center{text-align:center}
+
+/* toast */
+.toast{position:absolute;left:16px;right:16px;top:60px;z-index:90;background:var(--ink);color:#fff;border-radius:14px;padding:12px 14px;font-size:13px;display:flex;gap:10px;align-items:center;
+  transform:translateY(-24px);opacity:0;transition:transform .35s var(--ease),opacity .25s;pointer-events:none;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+.toast.in{transform:none;opacity:1}
+.stage.full .toast{top:calc(12px + env(safe-area-inset-top,0px))}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+/* scheda paziente · gauge rischio + lista indici */
+.rcard{display:flex;flex-direction:column;gap:24px}
+.gwrap{display:flex;flex-direction:column;gap:12px}
+.gauge{position:relative;width:100%;max-width:326px;aspect-ratio:326/142;margin:0 auto}
+.gauge svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.gz{fill:none;stroke-width:17.6;opacity:.3;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .62s var(--ease) var(--d),opacity .5s var(--ease)}
+.gauge.go .gz{stroke-dashoffset:0}
+.gauge.nt *{transition:none!important}
+.gauge.lit .gz.act{opacity:1}
+.gi{fill:#fff;stroke-width:3;opacity:0;transition:opacity .3s .25s}
+.gauge.go .gi{opacity:1}
+.gv{position:absolute;left:50%;top:50%;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;opacity:0;transform:translate(-50%,8px);transition:opacity .45s var(--ease),transform .45s var(--ease)}
+.gauge.lit .gv{opacity:1;transform:translate(-50%,0)}
+.gv b{font-size:28px;line-height:34px;font-weight:700}
+.gv span{font-size:12px;line-height:15px;font-weight:500;color:var(--muted)}
+.gl{position:absolute;top:88.7%;font-size:10px;line-height:12px;font-weight:500;color:var(--muted)}
+.gl.l{left:14.36%}.gl.r{left:77.82%}
+.ilist{display:flex;flex-direction:column}
+.irow{display:flex;align-items:center;gap:12px;padding:8px 0}
+.irow+.irow{border-top:1px solid var(--line)}
+.irow:last-child{padding-bottom:0}
+.ilist.anim .irow{animation:rise .5s var(--ease) both}
+.ilist.anim .irow:nth-child(1){animation-delay:.5s}.ilist.anim .irow:nth-child(2){animation-delay:.6s}.ilist.anim .irow:nth-child(3){animation-delay:.7s}
+.ival{width:48px;height:44px;border-radius:10px;background:var(--bg);display:grid;place-items:center;font-size:16px;font-weight:700;color:var(--text);flex:none}
+.itx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.itx b{font-size:14px;line-height:18px;font-weight:600}
+.itx small{font-size:12px;line-height:15px;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:15px;font-weight:600;flex:none}
+.pill svg{flex:none}
+.bb .btns.g10{gap:10px}
+/* scheda valutazione · moduli a fisarmonica */
+.mods{background:#fff;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:20px}
+.mdiv{height:1px;background:var(--line)}
+.mh{width:100%;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;text-align:left;color:var(--text)}
+.mt{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.mtt{display:flex;flex-direction:column;gap:2px}
+.mtt b{font-size:16px;line-height:20px;font-weight:700}
+.mtt b.l21{line-height:21px}
+.mtt small{font-size:12px;line-height:15px;font-weight:500;color:var(--muted)}
+.mtt small i{font-style:normal;font-weight:400}
+.mod.gass .mtt b{font-size:18px;line-height:22px}
+.mod.gass .mtt small{color:var(--text)}
+.mh .mchev{flex:none;color:var(--blue);transition:transform .3s var(--ease)}
+.mod.open .mchev{transform:rotate(180deg)}
+.mb{display:grid;grid-template-rows:0fr;transition:grid-template-rows .38s var(--ease)}
+.mod.open .mb{grid-template-rows:1fr}
+.mb>div{overflow:hidden;min-height:0}
+.mrows2{margin-top:16px;padding-top:32px;display:flex;flex-direction:column;gap:12px}
+.mrow2{display:flex;align-items:center;gap:10px}
+.mrow2>span:first-child{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.mrow2 b{font-size:14px;line-height:17px;font-weight:600}
+.mrow2 small{font-size:12px;line-height:15px;color:var(--muted)}
+.mrow2 .pt{font-size:12px;line-height:15px;color:var(--muted);flex:none}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <aside class="side" aria-label="Informazioni sul prototipo">
+    <div class="brand" id="sideLogo"></div>
+    <h2>Prototipo navigabile · Medico operatore</h2>
+    <p>Accedi con le credenziali già inserite: alla verifica in due passaggi va bene qualsiasi codice a 6 cifre.</p>
+    <p>Pazienti e valutazioni che crei restano salvati in questo browser, così puoi riprendere la demo in un secondo momento.</p>
+    <p>Le domande di MNA-SF e SPPB sono testi segnaposto. GASS-TAVR e fenotipo usano regole dimostrative, in attesa di cutoff e matrice ufficiali del team medico.</p>
+    <div class="acts">
+      <button class="sbtn" id="sideReset"></button>
+      <button class="sbtn" id="sideLogin"></button>
+      <a class="sbtn" id="sideSwitch" href="./">Cambia dispositivo</a>
+    </div>
+    <div class="fine">CGAssist · App 1.0 · Algoritmi v1.0 (dimostrativi)</div>
+  </aside>
+  <div class="dwrap" id="dwrap">
+    <div class="device">
+      <span class="key k1"></span><span class="key k2"></span><span class="key k3"></span><span class="key k4"></span>
+      <div class="bezel"><div class="screen" id="screen"></div></div>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+/* =========================================================
+   ICONS + LOGO
+   ========================================================= */
+const LOGO = `<svg viewBox="0 0 214 38" fill="currentColor" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CGAssist"><path d="M17.6 37.7C15.2 37.7 13 37.3 11 36.5C9 35.6 7.3 34.4 5.8 32.9C4.3 31.4 3.2 29.5 2.4 27.4C1.6 25.3 1.2 23 1.2 20.5C1.2 18 1.6 15.9 2.4 13.8C3.3 11.7 4.5 9.9 6 8.4C7.6 6.8 9.3 5.6 11.4 4.8C13.4 3.9 15.6 3.5 18 3.5C19.6 3.5 21.2 3.7 22.8 4.2C24.3 4.7 25.7 5.3 27 6.2C28.2 7 29.3 8 30.2 9.1L26.2 13.4C25.4 12.6 24.5 11.8 23.6 11.3C22.8 10.7 21.8 10.2 20.9 9.9C20 9.6 19 9.5 18 9.5C16.6 9.5 15.2 9.7 13.9 10.3C12.6 10.8 11.5 11.6 10.5 12.6C9.6 13.5 8.9 14.7 8.3 16.1C7.8 17.4 7.5 18.9 7.5 20.6C7.5 22.2 7.8 23.8 8.3 25.1C8.8 26.5 9.6 27.7 10.5 28.7C11.5 29.6 12.7 30.4 14 30.9C15.4 31.4 16.9 31.7 18.5 31.7C19.6 31.7 20.6 31.6 21.6 31.3C22.5 31 23.5 30.6 24.3 30.1C25.1 29.5 25.9 28.9 26.6 28.2L29.7 33.1C28.9 34 27.9 34.8 26.6 35.5C25.3 36.1 23.9 36.7 22.3 37.1C20.8 37.5 19.2 37.7 17.6 37.7H17.6Z"/><path d="M51.3 37.7C48.8 37.7 46.5 37.3 44.4 36.4C42.2 35.5 40.4 34.3 38.8 32.7C37.2 31.2 36 29.4 35.1 27.3C34.3 25.2 33.8 23 33.8 20.5C33.8 18.1 34.3 15.9 35.2 13.8C36 11.7 37.3 9.9 38.9 8.4C40.4 6.8 42.3 5.6 44.5 4.8C46.6 3.9 48.9 3.5 51.4 3.5C53.2 3.5 54.9 3.7 56.5 4.2C58.1 4.7 59.6 5.3 60.9 6.2C62.2 7 63.3 8 64.1 9.1L60.2 13.2C59.3 12.3 58.4 11.6 57.5 11C56.5 10.5 55.5 10 54.5 9.7C53.5 9.4 52.5 9.2 51.4 9.2C49.8 9.2 48.3 9.5 47 10.1C45.6 10.7 44.4 11.5 43.4 12.5C42.4 13.5 41.6 14.7 41 16C40.5 17.4 40.2 18.9 40.2 20.5C40.2 22.1 40.5 23.5 41.1 24.9C41.7 26.3 42.5 27.6 43.5 28.6C44.6 29.7 45.8 30.5 47.2 31.1C48.6 31.6 50 31.9 51.6 31.9C52.8 31.9 53.9 31.8 54.9 31.4C55.9 31.1 56.8 30.6 57.6 30C58.4 29.3 59 28.6 59.5 27.8C59.9 27 60.1 26.1 60.1 25.1V24.1L61 25.1H51.1V19.6H66.2C66.3 19.9 66.3 20.3 66.4 20.7C66.4 21.2 66.4 21.6 66.4 22C66.5 22.4 66.5 22.7 66.5 23C66.5 25.2 66.1 27.2 65.3 29C64.6 30.8 63.5 32.3 62.1 33.6C60.7 34.9 59.1 35.9 57.3 36.6C55.4 37.3 53.5 37.7 51.3 37.7L51.3 37.7Z"/><path d="M123.6 37.7C121.4 37.7 119.4 37.3 117.6 36.6C115.9 35.8 114.4 34.8 113.3 33.4L117.1 30.1C118.1 31.2 119.2 31.9 120.3 32.4C121.5 32.9 122.8 33.1 124.1 33.1C124.6 33.1 125.1 33.1 125.5 32.9C126 32.8 126.3 32.6 126.6 32.4C127 32.1 127.2 31.8 127.4 31.5C127.6 31.1 127.7 30.8 127.7 30.4C127.7 29.6 127.4 29 126.8 28.6C126.5 28.3 126 28.1 125.3 27.8C124.6 27.6 123.7 27.3 122.6 27.1C120.9 26.6 119.5 26.1 118.3 25.5C117.2 24.9 116.3 24.3 115.7 23.6C115.1 23 114.7 22.3 114.4 21.5C114.2 20.7 114 19.9 114 19C114 17.9 114.3 16.9 114.8 16C115.3 15.1 115.9 14.3 116.8 13.7C117.7 13 118.7 12.5 119.8 12.1C121 11.8 122.2 11.6 123.4 11.6C124.6 11.6 125.9 11.8 127.1 12.1C128.3 12.4 129.4 12.9 130.4 13.4C131.5 14 132.4 14.7 133.1 15.6L129.8 19.1C129.2 18.6 128.6 18.1 127.9 17.6C127.1 17.2 126.4 16.8 125.7 16.5C125 16.3 124.3 16.1 123.6 16.1C123 16.1 122.5 16.2 122 16.3C121.5 16.4 121.1 16.6 120.8 16.8C120.5 17 120.3 17.3 120.1 17.6C119.9 18 119.8 18.4 119.8 18.8C119.8 19.2 119.9 19.5 120.1 19.9C120.3 20.2 120.5 20.5 120.9 20.7C121.2 20.9 121.7 21.2 122.4 21.5C123.1 21.7 124 22 125.2 22.3C126.7 22.7 128 23.1 129.1 23.6C130.1 24.2 131 24.7 131.6 25.4C132.2 26 132.6 26.6 132.9 27.4C133.1 28.2 133.2 29 133.2 29.9C133.2 31.4 132.8 32.8 132 33.9C131.1 35.1 130 36 128.5 36.7C127.1 37.4 125.5 37.7 123.6 37.7V37.7Z"/><path d="M146.8 37.7C144.6 37.7 142.6 37.3 140.8 36.6C139 35.8 137.6 34.8 136.5 33.4L140.3 30.1C141.3 31.2 142.3 31.9 143.5 32.4C144.7 32.9 145.9 33.1 147.2 33.1C147.8 33.1 148.3 33.1 148.7 32.9C149.1 32.8 149.5 32.6 149.8 32.4C150.1 32.1 150.4 31.8 150.6 31.5C150.7 31.1 150.8 30.8 150.8 30.4C150.8 29.6 150.5 29 150 28.6C149.6 28.3 149.1 28.1 148.5 27.8C147.8 27.6 146.9 27.3 145.8 27.1C144.1 26.6 142.6 26.1 141.5 25.5C140.4 24.9 139.5 24.3 138.8 23.6C138.3 23 137.9 22.3 137.6 21.5C137.3 20.7 137.2 19.9 137.2 19C137.2 17.9 137.5 16.9 137.9 16C138.4 15.1 139.1 14.3 140 13.7C140.8 13 141.8 12.5 143 12.1C144.1 11.8 145.3 11.6 146.6 11.6C147.8 11.6 149.1 11.8 150.3 12.1C151.5 12.4 152.6 12.9 153.6 13.4C154.7 14 155.5 14.7 156.3 15.6L153 19.1C152.4 18.6 151.8 18.1 151 17.6C150.3 17.2 149.6 16.8 148.9 16.5C148.1 16.3 147.4 16.1 146.8 16.1C146.2 16.1 145.7 16.2 145.2 16.3C144.7 16.4 144.3 16.6 144 16.8C143.7 17 143.4 17.3 143.2 17.6C143.1 18 143 18.4 143 18.8C143 19.2 143.1 19.5 143.3 19.9C143.5 20.2 143.7 20.5 144 20.7C144.4 20.9 144.9 21.2 145.6 21.5C146.3 21.7 147.2 22 148.3 22.3C149.9 22.7 151.2 23.1 152.3 23.6C153.3 24.2 154.1 24.7 154.7 25.4C155.3 26 155.8 26.6 156 27.4C156.3 28.2 156.4 29 156.4 29.9C156.4 31.4 156 32.8 155.1 33.9C154.3 35.1 153.2 36 151.7 36.7C150.3 37.4 148.6 37.7 146.8 37.7V37.7Z"/><path d="M165.1 6.8C163.9 6.8 163 6.5 162.4 5.9C161.7 5.3 161.4 4.5 161.4 3.4C161.4 2.4 161.7 1.6 162.4 1C163.1 0.3 164 0 165.1 0C166.3 0 167.3 0.3 167.9 0.9C168.6 1.5 168.9 2.3 168.9 3.4C168.9 4.4 168.5 5.2 167.9 5.9C167.2 6.5 166.3 6.8 165.1 6.8V6.8ZM162.2 37.2V12.1H168.1V37.2H162.2Z"/><path d="M184 37.7C181.8 37.7 179.8 37.3 178 36.6C176.2 35.8 174.8 34.8 173.7 33.4L177.5 30.1C178.4 31.2 179.5 31.9 180.7 32.4C181.9 32.9 183.1 33.1 184.4 33.1C185 33.1 185.4 33.1 185.9 32.9C186.3 32.8 186.7 32.6 187 32.4C187.3 32.1 187.6 31.8 187.7 31.5C187.9 31.1 188 30.8 188 30.4C188 29.6 187.7 29 187.1 28.6C186.8 28.3 186.3 28.1 185.6 27.8C184.9 27.6 184.1 27.3 183 27.1C181.3 26.6 179.8 26.1 178.7 25.5C177.5 24.9 176.6 24.3 176 23.6C175.5 23 175.1 22.3 174.8 21.5C174.5 20.7 174.4 19.9 174.4 19C174.4 17.9 174.6 16.9 175.1 16C175.6 15.1 176.3 14.3 177.1 13.7C178 13 179 12.5 180.2 12.1C181.3 11.8 182.5 11.6 183.7 11.6C185 11.6 186.2 11.8 187.4 12.1C188.6 12.4 189.8 12.9 190.8 13.4C191.8 14 192.7 14.7 193.4 15.6L190.2 19.1C189.6 18.6 188.9 18.1 188.2 17.6C187.5 17.2 186.8 16.8 186 16.5C185.3 16.3 184.6 16.1 184 16.1C183.3 16.1 182.8 16.2 182.4 16.3C181.9 16.4 181.5 16.6 181.2 16.8C180.8 17 180.6 17.3 180.4 17.6C180.2 18 180.2 18.4 180.2 18.8C180.2 19.2 180.3 19.5 180.5 19.9C180.6 20.2 180.9 20.5 181.2 20.7C181.6 20.9 182.1 21.2 182.8 21.5C183.5 21.7 184.4 22 185.5 22.3C187.1 22.7 188.4 23.1 189.4 23.6C190.5 24.2 191.3 24.7 191.9 25.4C192.5 26 192.9 26.6 193.2 27.4C193.5 28.2 193.6 29 193.6 29.9C193.6 31.4 193.2 32.8 192.3 33.9C191.5 35.1 190.3 36 188.9 36.7C187.4 37.4 185.8 37.7 184 37.7V37.7Z"/><path d="M196.5 17.6V12.1H212.8V17.6H196.5ZM201.5 37.2V5.8H207.3V37.2H201.5Z"/><path d="M69.4 37.8H75.8L91.5 8.9L88.4 3.1L69.4 37.8Z"/><path d="M101.5 26.8C100.2 28.1 98.7 29.3 97 30.2C94.5 31.5 91.7 32.2 88.7 32.2C84.4 32.2 80.4 30.7 77.3 28.2L79.3 23.2C81.6 25.7 85 27.3 88.7 27.3C91.7 27.3 94.5 26.2 96.7 24.5C97.5 23.8 98.3 23 99 22.1"/><path d="M101.4 26.6L88.5 3.1L85.5 8.9L96.9 30C98.6 29.1 100.1 28 101.4 26.6H101.4Z"/><path d="M99.6 34.8L101.2 37.8H107.5L104.2 31.6C102.8 32.9 101.3 33.9 99.6 34.8Z"/></svg>`;
+const IC = {
+  back:'<path d="M15 5l-7 7 7 7"/>', chev:'<path d="M9 5l7 7-7 7"/>', down:'<path d="M5 9l7 7 7-7"/>',
+  share:'<circle cx="17.5" cy="5.5" r="2.5"/><circle cx="6.5" cy="12" r="2.5"/><circle cx="17.5" cy="18.5" r="2.5"/><path d="M8.7 10.7l6.6-3.9M8.7 13.3l6.6 3.9"/>',
+  close:'<path d="M6 6l12 12M18 6L6 18"/>', check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  xCircle:'<circle cx="12" cy="12" r="9.5"/><path d="M8.8 8.8l6.4 6.4M15.2 8.8l-6.4 6.4"/>', checkCircle:'<circle cx="12" cy="12" r="9.5"/><path d="M7.6 12.2l3 3 5.8-6.2"/>',
+  alert:'<circle cx="12" cy="12" r="9.5"/><path d="M12 7.2v6.2"/><path d="M12 16.6v.4"/>',
+  info:'<circle cx="12" cy="12" r="9.5"/><path d="M12 11v5.8"/><path d="M12 7.6v.4"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  home:'<path d="M4.5 10.2L12 4l7.5 6.2V19.5a.5.5 0 01-.5.5h-4.5v-5.5h-5V20H5a.5.5 0 01-.5-.5z"/>',
+  patients:'<rect x="5" y="4" width="14" height="16.5" rx="2"/><path d="M9.5 4V2.8h5V4"/><circle cx="12" cy="10.6" r="2.3"/><path d="M8.3 17c.7-1.9 2.1-2.8 3.7-2.8s3 .9 3.7 2.8"/>',
+  user:'<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="10" r="3"/><path d="M6.6 18.2c1.3-1.9 3.2-2.9 5.4-2.9s4.1 1 5.4 2.9"/>',
+  logout:'<path d="M10 4.5H5.5v15H10"/><path d="M14.5 8l4 4-4 4M18.5 12H9.5"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
+  tune:'<path d="M4 7.5h9M17 7.5h3M4 16.5h3M11 16.5h9"/><circle cx="15" cy="7.5" r="2"/><circle cx="9" cy="16.5" r="2"/>',
+  eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeOff:'<path d="M3.5 3.5l17 17"/><path d="M10.5 6.1c.5-.1 1-.1 1.5-.1 6 0 9.5 6 9.5 6a17 17 0 01-2.8 3.4M6.7 6.9C4 8.6 2.5 12 2.5 12S6 18.5 12 18.5c1.5 0 2.9-.4 4.1-1"/>',
+  shield:'<path d="M12 3.2l7 2.8v5.6c0 4.3-2.9 7.9-7 9.4-4.1-1.5-7-5.1-7-9.4V6z"/><path d="M8.9 12.1l2.1 2.1 4.1-4.3"/>',
+  listCheck:'<rect x="3.5" y="4" width="17" height="16" rx="2.5"/><path d="M7.5 8.8h6M7.5 12.5h3.5"/><path d="M12.8 15.6l1.9 1.9 3.3-3.7"/>',
+  timer:'<circle cx="12" cy="13.5" r="7"/><path d="M12 10.2v3.6l2.2 1.4M9.8 3h4.4"/>',
+  lock:'<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.2 10.5V8a3.8 3.8 0 017.6 0v2.5"/>',
+  phone:'<rect x="7" y="3" width="10" height="18" rx="2.2"/><path d="M11 18h2"/>',
+  book:'<path d="M5.5 5a2 2 0 012-2H18v15H7.5a2 2 0 00-2 2z"/><path d="M5.5 20a2 2 0 002 2H18v-4"/>',
+  doc:'<path d="M6.5 3h7.5l4 4v14h-11.5z"/><path d="M14 3v4h4M9.5 12h5M9.5 15.5h5"/>',
+  copy:'<rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6.5a2 2 0 00-2-2h-7a2 2 0 00-2 2v7a2 2 0 002 2h2"/>',
+  up:'<path d="M12 19V6M6.5 11.5L12 6l5.5 5.5"/>', dn:'<path d="M12 5v13M6.5 12.5L12 18l5.5-5.5"/>',
+  reset:'<path d="M4.5 12a7.5 7.5 0 107.5-7.5A7.6 7.6 0 006 7.6"/><path d="M5.5 3.5v4.4h4.4"/>',
+  dead:'<circle cx="12" cy="12" r="9.5"/><path d="M8 12h8"/>',
+  cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M7.5 13h2M11 13h2M14.5 13h2M7.5 16.5h2M11 16.5h2"/>'
+};
+function ic(n, s = 24, extra = '') {
+  return `<svg class="${extra}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+}
+const SB = `<div class="sb"><span>9:41</span><span class="ico">
+<svg width="18" height="12" viewBox="0 0 18 12" fill="#fff"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+<svg width="16" height="12" viewBox="0 0 16 12" fill="#fff"><path d="M8 2.4c2.3 0 4.4.9 6 2.4l1.2-1.3A10.4 10.4 0 008 .6 10.4 10.4 0 00.8 3.5L2 4.8a8.6 8.6 0 016-2.4zm0 3.6c1.3 0 2.5.5 3.4 1.3l1.3-1.3A6.6 6.6 0 008 4.2 6.6 6.6 0 003.3 6l1.3 1.3C5.5 6.5 6.7 6 8 6zm0 3.6c.4 0 .8.1 1.1.4L8 11.4 6.9 10c.3-.3.7-.4 1.1-.4z"/></svg>
+<svg width="27" height="13" viewBox="0 0 27 13" fill="none"><rect x=".5" y=".5" width="23" height="12" rx="3.5" stroke="#fff" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="#fff"/><path d="M25 4.5v4c.8-.3 1.4-1.1 1.4-2s-.6-1.7-1.4-2z" fill="#fff" opacity=".45"/></svg>
+</span></div>`;
+
+/* =========================================================
+   CONSTANTS + HELPERS
+   ========================================================= */
+const LS_KEY = 'cgassist-demo-v3';
+const ALG = 'v1.0';
+const DOC = { name:'Dr. Mario Rossi', ini:'MR', centro:'Centro Firenze', pre:'FIR', email:'m.rossi@aou-careggi.it', role:'Medico operatore' };
+const PATOLOGIE = ['Amiloidosi Cardiaca','Scompenso Cardiaco','Stenosi Aortica','Lorem ipsum dolor','Lorem ipsum dolor sit'];
+const BADL = ['Lavarsi','Vestirsi','Usare il bagno','Spostarsi (letto-sedia)','Alimentarsi','Continenza'];
+const MNA = ['Riduzione dell’apporto alimentare','Perdita di peso','Mobilità','Stress psicologico / malattia acuta','Problemi neuropsicologici'];
+const MNA_MAX = [2,3,2,2,2];
+const L1 = 'Lorem ipsum dolor sit amet', L2 = 'Lorem ipsum dolor sit';
+const CHARLSON = [['Cardiopatia ischemica',1],['Scompenso cardiaco congestizio',1],['Arteriopatia periferica',1],['Malattia cerebrovascolare',1],['Demenza',1],
+  ['Malattia polmonare cronica',1],['Malattia del connettivo',1],['Ulcera peptica',1],['Epatopatia lieve',1],['Diabete senza complicanze d’organo',1],
+  ['Emiplegia',2],['Malattia renale moderata-severa',2],['Diabete con complicanze d’organo',2],['Neoplasia solida senza metastasi',2],['Leucemia',2],['Linfoma',2],
+  ['Epatopatia moderata-severa',3],['Neoplasia metastatica',6],['AIDS / HIV',6]];
+const CH_EXCL = [[12,9],[16,8],[17,13]]; // se presente il primo, il secondo non si somma
+const ABC = (a, b) => a.localeCompare(b, 'it', { sensitivity: 'base' });
+const CH_ORDER = CHARLSON.map((_, i) => i).sort((a, b) => ABC(CHARLSON[a][0], CHARLSON[b][0])); // ordine alfabetico a video, indici invariati
+const THERAPY = ['Antiaggreganti piastrinici','Anticoagulanti','Beta-bloccanti','ACE-inibitori','ARB / Sartani','ARNI','Calcio-antagonisti','Farmaci antiaritmici',
+  'Diuretici dell’ansa','Diuretici tiazidici / tiazide-simili','Antialdosteronici / MRA','Inibitori SGLT2','Nitrati','Statine / Ezetimibe','Inibitori PCSK9','Digossina'];
+const LOOP = 8;
+const LABS = [{k:'date',l:'Data del prelievo',date:1},{k:'ntprobnp',l:'NT-proBNP',u:'pg/mL',ph:'Es. 2.450'},{k:'hb',l:'Emoglobina',u:'g/dL',ph:'Es. 12,5'},
+  {k:'alb',l:'Albumina',u:'g/dL',ph:'Es. 3,6'},{k:'creat',l:'Creatinina',u:'mg/dL',ph:'Es. 1,4'}];
+const ECHO = [{k:'date',l:'Data dell’esame',date:1},{k:'setto',l:'Setto interventricolare (spessore)',u:'mm',ph:'Es. 16'},{k:'fe',l:'Frazione di eiezione',u:'%',ph:'Es. 48'},
+  {k:'vol',l:'Volume atrio sinistro',u:'mL',ph:'Es. 62'},{k:'paps',l:'PAPs – pressione arteriosa polmonare sistolica',u:'mmHg',ph:'Es. 42'}];
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const p2 = n => String(n).padStart(2, '0');
+const D = v => v instanceof Date ? v : new Date(v);
+const fDate = v => { const d = D(v); return `${p2(d.getDate())}-${p2(d.getMonth()+1)}-${d.getFullYear()}`; };
+const fTime = v => { const d = D(v); return `${p2(d.getHours())}:${p2(d.getMinutes())}`; };
+const isoDay = v => { const d = D(v); return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`; };
+const isoToDisp = s => s ? s.split('-').reverse().join('-') : '';
+/* anagrafica: nome visualizzato + età calcolata dalla data di nascita */
+const fullName = p => [p.nome, p.cognome].filter(Boolean).join(' ') || p.code;
+function ageOf(p, at = new Date()) {
+  if (!p.nascita) return p.eta;
+  const b = D(p.nascita + 'T12:00:00'), a = D(at);
+  let y = a.getFullYear() - b.getFullYear();
+  if (a.getMonth() < b.getMonth() || (a.getMonth() === b.getMonth() && a.getDate() < b.getDate())) y--;
+  return y;
+}
+function parseDob(s) { // 'gg/mm/aaaa' -> 'aaaa-mm-gg' | null
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s); if (!m) return null;
+  const d = +m[1], mo = +m[2], y = +m[3], dt = new Date(y, mo - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === mo - 1 && dt.getDate() === d ? `${y}-${p2(mo)}-${p2(d)}` : null;
+}
+function rel(v) {
+  const d = D(v), now = new Date();
+  const day = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day(now) - day(d)) / 864e5);
+  if (diff === 0) return `oggi ${fTime(d)}`;
+  if (diff === 1) return `ieri ${fTime(d)}`;
+  return `${p2(d.getDate())}/${p2(d.getMonth()+1)}/${String(d.getFullYear()).slice(2)}`;
+}
+function num(v) {
+  if (v === '' || v == null) return NaN;
+  let s = String(v).trim().replace(/\s/g, '');
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  return parseFloat(s);
+}
+const fmt1 = n => Number.isFinite(n) ? String(Math.round(n * 10) / 10).replace('.', ',') : '-';
+const filled = v => v !== '' && v != null && !Number.isNaN(num(v));
+
+/* =========================================================
+   CALCULATIONS (BADL, MNA-SF, SPPB, Charlson reali; GASS e fenotipo dimostrativi)
+   ========================================================= */
+const Calc = {
+  badl: arr => arr.every(x => x !== null) ? arr.filter(Boolean).length : null,
+  bmi: m => { const w = num(m.peso), h = num(m.altezza); return (w > 0 && h > 0) ? w / Math.pow(h / 100, 2) : NaN; },
+  bmiPts: b => b < 19 ? 0 : b < 21 ? 1 : b < 23 ? 2 : 3,
+  mna(m) { const b = this.bmi(m); if (m.a.some(x => x === null) || !Number.isFinite(b)) return null;
+    return m.a.reduce((s, v, i) => s + (v === 1 ? MNA_MAX[i] : 0), 0) + this.bmiPts(b); },
+  sppb(s) { const b = s.balanceNA ? 0 : num(s.balance), g = s.gaitNA ? 0 : num(s.gait); if (!Number.isFinite(b) || !Number.isFinite(g)) return null;
+    const bp = b >= 10 ? 4 : b >= 7 ? 3 : b >= 3 ? 2 : b > 0 ? 1 : 0;
+    const gp = g <= 0 ? 0 : g < 4.82 ? 4 : g <= 6.2 ? 3 : g <= 8.7 ? 2 : 1;
+    const n = s.chair.flat().filter(Boolean).length; const cp = Math.round(n / 9 * 4);
+    return bp + gp + cp; },
+  agePts: a => a >= 80 ? 4 : a >= 70 ? 3 : a >= 60 ? 2 : a >= 50 ? 1 : 0,
+  ageBand: a => a >= 80 ? 'Età ≥ 80 anni' : a >= 70 ? 'Età 70–79 anni' : a >= 60 ? 'Età 60–69 anni' : a >= 50 ? 'Età 50–59 anni' : 'Età < 50 anni',
+  charlsonItems(sel) { const skip = new Set(); CH_EXCL.forEach(([a, b]) => { if (sel[a]) skip.add(b); });
+    return CH_ORDER.filter(i => sel[i] && !skip.has(i)); },
+  charlson(sel, age) { return this.charlsonItems(sel).reduce((s, i) => s + CHARLSON[i][1], 0) + this.agePts(age); },
+  results(p) {
+    const a = p.assessment, c = a.cga, dd = a.diary;
+    const badl = this.badl(c.badl), mna = this.mna(c.mna), sppb = this.sppb(c.sppb);
+    const creat = dd.labsNA ? NaN : num(dd.labs.creat), paps = dd.echoNA ? NaN : num(dd.echo.paps);
+    const factors = [
+      { k:'Stato nutrizionale', bad: mna < 12, v:`MNA-SF ${mna}/14` },
+      { k:'Autonomia funzionale', bad: badl < 5, v:`BADL ${badl}/6` },
+      { k:'Funzione renale', bad: creat >= 1.3, v: dd.labsNA ? 'Esami non eseguiti' : `Creatinina ${fmt1(creat)} mg/dL` },
+      { k:'PAPs', bad: paps >= 45, v: dd.echoNA ? 'Ecocardiogramma non eseguito' : `${fmt1(paps)} mmHg` } ];
+    const g = factors.filter(f => f.bad).length;
+    const gClass = g <= 1 ? 'Basso' : g === 2 ? 'Intermedio' : 'Alto';
+    const dims = [badl < 6, mna < 12, sppb < 10];
+    const n = dims.filter(Boolean).length;
+    let f, name;
+    if (n === 0) { f = 1; name = 'Nessuna vulnerabilità'; }
+    else if (n === 1) { f = 2; name = ['Solo disabilità funzionale','Solo rischio di malnutrizione','Solo ridotta performance fisica'][dims.indexOf(true)]; }
+    else if (n === 3) { f = 5; name = 'Disabilità, malnutrizione e ridotta performance fisica'; }
+    else if (!dims[1]) { f = 3; name = 'Disabilità funzionale e ridotta performance fisica'; }
+    else { f = 4; name = dims[0] ? 'Rischio di malnutrizione e disabilità funzionale' : 'Rischio di malnutrizione e ridotta performance fisica'; }
+    const chItems = this.charlsonItems(dd.charlson);
+    return { badl, mna, sppb, factors, g, gClass, dims, f, fName: name,
+      charlson: this.charlson(dd.charlson, ageOf(p)), chItems, agePts: this.agePts(ageOf(p)), ageBand: this.ageBand(ageOf(p)),
+      alg: ALG, at: new Date().toISOString(), by: DOC.name };
+  }
+};
+
+/* section completion: 'todo' | 'part' | 'done' */
+function secState(p, k) {
+  const c = p.assessment.cga, d = p.assessment.diary;
+  switch (k) {
+    case 'badl': { const n = c.badl.filter(x => x !== null).length; return n === 6 ? 'done' : n ? 'part' : 'todo'; }
+    case 'mna': { const n = c.mna.a.filter(x => x !== null).length + (filled(c.mna.peso) ? 1 : 0) + (filled(c.mna.altezza) ? 1 : 0); return n === 7 ? 'done' : n ? 'part' : 'todo'; }
+    case 'sppb': { const n = (c.sppb.balanceNA || filled(c.sppb.balance) ? 1 : 0) + (c.sppb.gaitNA || filled(c.sppb.gait) ? 1 : 0); return n === 2 ? 'done' : (n || c.sppb.chair.flat().some(Boolean)) ? 'part' : 'todo'; }
+    case 'charlson': return d.charlsonDone ? 'done' : (d.charlson.some(Boolean) || d.charlsonNone) ? 'part' : 'todo';
+    case 'therapy': { const needDose = d.therapy[LOOP] && !filled(d.loopDose); return d.therapyDone && !needDose ? 'done' : (d.therapy.some(Boolean) || d.therapyNone || d.therapyDone) ? 'part' : 'todo'; }
+    case 'labs': case 'echo': { if (d[k + 'NA']) return 'done'; const o = d[k]; const n = Object.values(o).filter(v => v !== '').length; return n === 5 ? 'done' : n ? 'part' : 'todo'; }
+  }
+}
+const CGA_KEYS = ['badl','mna','sppb'], DIARY_KEYS = ['charlson','therapy','labs','echo'];
+const allDone = p => [...CGA_KEYS, ...DIARY_KEYS].every(k => secState(p, k) === 'done');
+
+/* =========================================================
+   STORE
+   ========================================================= */
+function emptyAssessment() {
+  return { status:'draft', updatedAt: new Date().toISOString(), validatedAt:null, results:null,
+    cga:{ badl:Array(6).fill(null), mna:{ a:Array(5).fill(null), peso:'', altezza:'' }, sppb:{ balance:'', gait:'', balanceNA:false, gaitNA:false, chair:[[false,false,false],[false,false,false],[false,false,false]] } },
+    diary:{ charlson:Array(19).fill(false), charlsonNone:false, charlsonDone:false, therapy:Array(16).fill(false), therapyNone:false, loopDose:'', therapyDone:false,
+      labs:{ date:'', ntprobnp:'', hb:'', alb:'', creat:'' }, labsNA:false, echo:{ date:'', setto:'', fe:'', vol:'', paps:'' }, echoNA:false } };
+}
+function seedPatient(o) {
+  const p = { code:o.code, nome:o.nome, cognome:o.cognome, nascita:o.nascita, centro:DOC.centro, patologia:o.pat, sesso:o.sesso, createdAt:o.created, assessment:emptyAssessment(), followups:[] };
+  const a = p.assessment; a.updatedAt = o.updated || o.created;
+  const f = o.fill || {};
+  if (f.badl != null) a.cga.badl = BADL.map((_, i) => i < f.badl);
+  if (f.mna) { a.cga.mna.a = f.mna.a; a.cga.mna.peso = f.mna.peso; a.cga.mna.altezza = f.mna.alt; }
+  if (f.sppb) { a.cga.sppb.balance = f.sppb[0]; a.cga.sppb.gait = f.sppb[1]; a.cga.sppb.chair = f.sppb[2]; }
+  if (f.ch) { f.ch.forEach(i => a.diary.charlson[i] = true); a.diary.charlsonDone = true; }
+  if (f.th) { f.th.forEach(i => a.diary.therapy[i] = true); a.diary.loopDose = f.dose || ''; a.diary.therapyDone = !f.thPartial; }
+  if (f.labs) a.diary.labs = f.labs;
+  if (f.echo) a.diary.echo = f.echo;
+  if (o.validated) {
+    a.status = 'validated'; a.validatedAt = o.validated;
+    a.results = Calc.results(p); a.results.at = o.validated;
+  }
+  (o.fu || []).forEach((x, i) => p.followups.push({ n:i + 1, ...x }));
+  return p;
+}
+const CH3 = [[true,true,false],[false,true,false],[true,true,true]];
+function seed() {
+  const now = new Date(); const yest = new Date(now.getTime() - 864e5); yest.setHours(16, 5, 0, 0);
+  const full = (o) => ({ badl:o.badl, mna:{ a:o.mnaA, peso:o.peso, alt:o.alt }, sppb:[o.bal, o.gait, o.chair || CH3], ch:o.ch, th:o.th, dose:o.dose,
+    labs:{ date:o.ld, ntprobnp:o.nt, hb:o.hb, alb:o.alb, creat:o.cr }, echo:{ date:o.ld, setto:o.set, fe:o.fe, vol:o.vol, paps:o.paps } });
+  return { v:1, patients:[
+    seedPatient({ code:'FIR-024-2026', nome:'Giulia', cognome:'Moretti', nascita:'1947-03-14', pat:'Stenosi Aortica', sesso:'F', created:'2026-09-28T09:10:00', updated:yest.toISOString(),
+      fill:{ badl:5, mna:{ a:[1,1,1,0,1], peso:'61', alt:'160' }, sppb:['8,1','5,9',CH3], ch:[1,9], th:[1,2,8], thPartial:true } }),
+    seedPatient({ code:'FIR-023-2026', nome:'Alessandro', cognome:'Conti', nascita:'1950-05-02', pat:'Scompenso Cardiaco', sesso:'M', created:'2026-08-24T08:30:00', updated:'2026-08-24T12:40:00', fill:{ badl:6 } }),
+    seedPatient({ code:'FIR-022-2026', nome:'Giorgio', cognome:'Marchetti', nascita:'1945-01-22', pat:'Amiloidosi Cardiaca', sesso:'M', created:'2026-08-12T10:00:00', updated:'2026-08-12T10:05:00' }),
+    seedPatient({ code:'FIR-020-2026', nome:'Martina', cognome:'Ricci', nascita:'1940-07-09', pat:'Scompenso Cardiaco', sesso:'F', created:'2026-08-20T09:00:00', validated:'2026-08-22T12:05:00',
+      fill:full({ badl:3, mnaA:[0,1,0,1,0], peso:'52', alt:'158', bal:'2,5', gait:'9,4', chair:[[true,false,false],[false,false,false],[true,false,false]], ch:[1,4,11], th:[1,2,8,10], dose:'75', ld:'2026-08-20', nt:'6.820', hb:'10,9', alb:'3,1', cr:'1,9', set:'12', fe:'35', vol:'78', paps:'58' }),
+      fu:[{ status:'deceduto', date:'2026-09-15', confirmedAt:'2026-09-17T09:30:00' }] }),
+    seedPatient({ code:'FIR-019-2026', nome:'Matteo', cognome:'Galli', nascita:'1948-02-27', pat:'Amiloidosi Cardiaca', sesso:'M', created:'2026-08-19T09:00:00', validated:'2026-08-22T11:40:00',
+      fill:full({ badl:6, mnaA:[1,1,1,1,1], peso:'74', alt:'176', bal:'10', gait:'4,4', chair:[[true,true,true],[true,true,false],[true,true,true]], ch:[1], th:[1,2,11], ld:'2026-08-19', nt:'1.920', hb:'13,6', alb:'4,0', cr:'1,1', set:'17', fe:'52', vol:'58', paps:'34' }),
+      fu:[{ status:'vivo', date:'2026-09-24', badl:6, mna:13, confirmedAt:'2026-09-24T10:15:00' }] }),
+    seedPatient({ code:'FIR-018-2026', nome:'Sofia', cognome:'Lombardi', nascita:'1942-04-18', pat:'Stenosi Aortica', sesso:'F', created:'2026-08-18T09:00:00', validated:'2026-08-22T10:12:00',
+      fill:full({ badl:5, mnaA:[1,1,0,1,1], peso:'58', alt:'164', bal:'7,6', gait:'6,0', ch:[1,9,11], th:[0,2,8,13], dose:'25', ld:'2026-08-18', nt:'2.450', hb:'12,5', alb:'3,6', cr:'1,4', set:'13', fe:'58', vol:'62', paps:'42' }) }),
+    seedPatient({ code:'FIR-017-2026', nome:'Lorenzo', cognome:'Ferri', nascita:'1944-08-10', pat:'Stenosi Aortica', sesso:'M', created:'2026-07-08T09:00:00', validated:'2026-07-10T15:20:00',
+      fill:full({ badl:4, mnaA:[1,1,1,1,1], peso:'70', alt:'172', bal:'7,4', gait:'5,2', ch:[1,9,11], th:[1,2,8,10,11], dose:'50', ld:'2026-07-08', nt:'2.450', hb:'12,5', alb:'3,6', cr:'1,4', set:'16', fe:'48', vol:'62', paps:'42' }),
+      fu:[{ status:'vivo', date:'2026-09-10', badl:4, mna:12, confirmedAt:'2026-09-10T11:00:00' }] }),
+    seedPatient({ code:'FIR-016-2026', nome:'Elena', cognome:'Rinaldi', nascita:'1946-06-03', pat:'Amiloidosi Cardiaca', sesso:'F', created:'2026-06-23T09:00:00', validated:'2026-06-25T09:45:00',
+      fill:full({ badl:6, mnaA:[1,0,1,1,1], peso:'55', alt:'161', bal:'9,2', gait:'5,6', ch:[1,5], th:[1,2,8,11], dose:'25', ld:'2026-06-23', nt:'3.100', hb:'12,1', alb:'3,8', cr:'1,2', set:'18', fe:'50', vol:'66', paps:'47' }) })
+  ]};
+}
+let S;
+function load() { try { const raw = localStorage.getItem(LS_KEY); if (raw) { const o = JSON.parse(raw); if (o && o.v === 1 && Array.isArray(o.patients)) return o; } } catch (e) {} return seed(); }
+let saveT;
+function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }, 120); }
+function resetData() { try { localStorage.removeItem(LS_KEY); } catch (e) {} S = seed(); save(); }
+const P = code => S.patients.find(p => p.code === code);
+function touch(p) { p.assessment.updatedAt = new Date().toISOString(); save(); }
+function nextCode() {
+  const yr = new Date().getFullYear();
+  const max = S.patients.reduce((m, p) => { const n = parseInt(p.code.split('-')[1], 10); return Math.max(m, n || 0); }, 0);
+  return `${DOC.pre}-${String(max + 1).padStart(3, '0')}-${yr}`;
+}
+const isDraft = p => p.assessment.status !== 'validated';
+const deceased = p => p.followups.find(f => f.status === 'deceduto');
+/* Regole valutazione / follow-up:
+   - la valutazione baseline resta modificabile finché non viene registrato un follow-up
+   - il follow-up si abilita 24 ore dopo la (prima) validazione della valutazione */
+const FU_WAIT = 24 * 36e5;
+const baseAt = p => p.assessment.firstValidatedAt || p.assessment.validatedAt;
+const fuUnlockAt = p => D(baseAt(p)).getTime() + FU_WAIT;
+const fuOpen = p => Date.now() >= fuUnlockAt(p);
+const canEdit = p => !isDraft(p) && !p.followups.length;
+// allo scadere delle 24 ore aggiorna back link e CTA della schermata aperta
+function liveUnlock(el, p, prm, def) {
+  const ms = fuUnlockAt(p) - Date.now(); if (ms <= 0 || ms > 2147e6) return;
+  setTimeout(() => { if (!el.isConnected) return; const tmp = document.createElement('div'); tmp.innerHTML = def.render(prm);
+    ['.hdr .top', '.bb'].forEach(q => { const a = $(q, el), b = $(q, tmp); if (a && b) a.replaceWith(b); }); }, ms + 50);
+}
+const hasGass = p => p.patologia === 'Stenosi Aortica'; // GASS-TAVR solo per i pazienti con stenosi aortica
+
+/* =========================================================
+   ROUTER + VIEWS
+   ========================================================= */
+const screen = document.getElementById('screen');
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)');
+const R = { stack: [], view: null, def: null };
+const SCREENS = {};
+const TAB_ROOTS = ['home', 'patients', 'account'];
+
+function animIn(el, frames, dur = 360) {
+  if (RM.matches || !el.animate) return Promise.resolve();
+  return el.animate(frames, { duration: dur, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }).finished.catch(() => {});
+}
+function mount(route, trans = 'push') {
+  const def = SCREENS[route.name];
+  const prev = R.view;
+  const el = document.createElement('section');
+  el.className = 'view';
+  el.dataset.screen = route.name;
+  el.innerHTML = def.render(route.params || {});
+  screen.insertBefore(el, nav);
+  R.view = el; R.def = def;
+  wire(el, def, route.params || {});
+  if (route.scroll && trans === 'pop') { const sc = el.querySelector('.scroll'); if (sc) sc.scrollTop = route.scroll; }
+  def.init && def.init(el, route.params || {});
+  setNav(route.name);
+  if (!prev) return;
+  prev.style.pointerEvents = 'none';
+  const done = () => prev.remove();
+  if (trans === 'push') {
+    animIn(prev, [{ transform: 'translateX(0)', filter: 'brightness(1)' }, { transform: 'translateX(-28%)', filter: 'brightness(.92)' }]);
+    animIn(el, [{ transform: 'translateX(100%)', boxShadow: '0 0 0 rgba(0,0,0,0)' }, { transform: 'translateX(0)', boxShadow: '-12px 0 30px rgba(0,0,0,.12)' }]).then(done);
+  } else if (trans === 'pop') {
+    screen.insertBefore(prev, nav); // old on top
+    animIn(el, [{ transform: 'translateX(-28%)', filter: 'brightness(.92)' }, { transform: 'translateX(0)', filter: 'brightness(1)' }]);
+    animIn(prev, [{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }]).then(done);
+  } else if (trans === 'fade') {
+    animIn(el, [{ opacity: 0, transform: 'scale(.985)' }, { opacity: 1, transform: 'scale(1)' }], 300).then(done);
+  } else if (trans === 'up') {
+    animIn(el, [{ transform: 'translateY(6%)', opacity: 0 }, { transform: 'none', opacity: 1 }], 380).then(done);
+  } else done();
+}
+function saveScroll() { const top = R.stack[R.stack.length - 1]; if (top && R.view) { const sc = R.view.querySelector('.scroll'); top.scroll = sc ? sc.scrollTop : 0; } }
+function go(name, params = {}, trans = 'push') { saveScroll(); const r = { name, params }; R.stack.push(r); mount(r, trans); }
+function replace(name, params = {}, trans = 'push') { R.stack.pop(); const r = { name, params }; R.stack.push(r); mount(r, trans); }
+function back(n = 1) { if (R.stack.length <= 1) return; for (let i = 0; i < n && R.stack.length > 1; i++) R.stack.pop(); mount(R.stack[R.stack.length - 1], 'pop'); }
+function resetTo(routes, trans = 'fade') { R.stack = routes.map(r => typeof r === 'string' ? { name: r, params: {} } : r); mount(R.stack[R.stack.length - 1], trans); }
+function rootTab() { return R.stack[0] && TAB_ROOTS.includes(R.stack[0].name) ? R.stack[0] : { name: 'home', params: {} }; }
+function refresh() {
+  const r = R.stack[R.stack.length - 1]; const old = R.view; const sc = old.querySelector('.scroll'); const top = sc ? sc.scrollTop : 0;
+  const el = document.createElement('section'); el.className = 'view'; el.dataset.screen = r.name;
+  el.innerHTML = R.def.render(r.params || {});
+  screen.insertBefore(el, old); old.remove(); R.view = el;
+  wire(el, R.def, r.params || {});
+  const nsc = el.querySelector('.scroll'); if (nsc) nsc.scrollTop = top;
+  R.def.init && R.def.init(el, r.params || {});
+}
+function wire(el, def, params) {
+  el.addEventListener('click', e => {
+    const t = e.target.closest('[data-act]'); if (!t || !el.contains(t)) return;
+    const act = t.dataset.act; const h = (def.actions && def.actions[act]) || COMMON[act];
+    if (h) { e.preventDefault(); h(t, params, el); }
+  });
+  el.addEventListener('input', e => {
+    const t = e.target.closest('[data-in]'); if (!t) return;
+    const h = def.inputs && def.inputs[t.dataset.in]; if (h) h(t, params, el);
+  });
+}
+const COMMON = {
+  back: () => back(),
+  na: () => toast('Funzione non disponibile nel prototipo', 'info'),
+  share: () => toast('Condivisione non disponibile nel prototipo', 'info'),
+};
+
+/* ---------- bottom nav ---------- */
+const nav = document.createElement('nav');
+nav.className = 'nav hide';
+nav.setAttribute('aria-label', 'Navigazione principale');
+const NAVP = {
+  home: ['M6 19H9.35V13.06H14.65V19H18V10L12 5.48L6 10V19ZM4.5 20.5V9.25L12 3.61L19.5 9.25V20.5H13.15V14.56H10.85V20.5H4.5Z', 'M4 21V9L12 3L20 9V21H14V14H10V21H4Z'],
+  patients: ['M15.12 15.04C14.6 14.53 14.35 13.9 14.35 13.16C14.35 12.43 14.6 11.8 15.12 11.28C15.64 10.77 16.26 10.51 17 10.51C17.74 10.51 18.36 10.77 18.88 11.28C19.4 11.8 19.65 12.43 19.65 13.16C19.65 13.9 19.4 14.53 18.88 15.04C18.36 15.56 17.74 15.82 17 15.82C16.26 15.82 15.64 15.56 15.12 15.04ZM17.82 13.98C18.04 13.76 18.15 13.49 18.15 13.16C18.15 12.84 18.04 12.57 17.82 12.35C17.59 12.12 17.32 12.01 17 12.01C16.68 12.01 16.41 12.12 16.18 12.35C15.96 12.57 15.85 12.84 15.85 13.16C15.85 13.49 15.96 13.76 16.18 13.98C16.41 14.21 16.68 14.32 17 14.32C17.32 14.32 17.59 14.21 17.82 13.98ZM11.35 22.27V19.72C11.35 19.43 11.42 19.15 11.55 18.9C11.69 18.64 11.88 18.44 12.13 18.29C12.63 17.99 13.16 17.75 13.71 17.55C14.26 17.35 14.83 17.21 15.4 17.12L17 19.13L18.59 17.12C19.17 17.21 19.73 17.35 20.28 17.55C20.83 17.75 21.35 17.99 21.85 18.29C22.1 18.44 22.29 18.64 22.43 18.9C22.57 19.15 22.65 19.42 22.65 19.71V22.27H11.35ZM12.82 20.77H16.39L14.83 18.79C14.48 18.88 14.14 19 13.8 19.14C13.47 19.28 13.14 19.44 12.82 19.62V20.77ZM17.61 20.77H21.15V19.62C20.84 19.43 20.52 19.27 20.19 19.14C19.85 19 19.51 18.89 19.16 18.8L17.61 20.77ZM5.31 20.5C4.81 20.5 4.38 20.32 4.03 19.97C3.68 19.61 3.5 19.19 3.5 18.69V5.31C3.5 4.81 3.68 4.39 4.03 4.03C4.39 3.68 4.81 3.5 5.31 3.5H18.69C19.19 3.5 19.61 3.68 19.97 4.03C20.32 4.39 20.5 4.81 20.5 5.31V9.65C20.29 9.42 20.07 9.19 19.83 8.99C19.6 8.78 19.32 8.64 19 8.56V5.31C19 5.22 18.97 5.14 18.91 5.09C18.86 5.03 18.78 5 18.69 5H5.31C5.22 5 5.14 5.03 5.09 5.09C5.03 5.14 5 5.22 5 5.31V18.69C5 18.78 5.03 18.86 5.09 18.91C5.14 18.97 5.22 19 5.31 19H9.05C9.02 19.12 9 19.24 8.98 19.36C8.97 19.48 8.96 19.6 8.96 19.72V20.5H5.31ZM7.25 8.87H14.46C14.8 8.63 15.16 8.45 15.55 8.34C15.95 8.22 16.34 8.16 16.75 8.14V7.37H7.25V8.87ZM7.25 12.75H12.01C12.02 12.48 12.06 12.23 12.12 11.98C12.18 11.73 12.25 11.49 12.35 11.25H7.25V12.75ZM7.25 16.63H10.37C10.55 16.49 10.74 16.36 10.93 16.24C11.13 16.12 11.33 16.01 11.53 15.92V15.13H7.25V16.63Z',
+    'M15.12 15.04C14.6 14.53 14.35 13.9 14.35 13.16C14.35 12.43 14.6 11.8 15.12 11.28C15.64 10.77 16.26 10.51 17 10.51C17.74 10.51 18.36 10.77 18.88 11.28C19.4 11.8 19.65 12.43 19.65 13.16C19.65 13.9 19.4 14.53 18.88 15.04C18.36 15.56 17.74 15.82 17 15.82C16.26 15.82 15.64 15.56 15.12 15.04ZM11.35 22.27V19.72C11.35 19.43 11.42 19.15 11.55 18.9C11.69 18.64 11.88 18.44 12.13 18.29C12.63 17.99 13.16 17.75 13.71 17.55C14.26 17.35 14.83 17.21 15.4 17.12L17 19.13L18.59 17.12C19.17 17.21 19.73 17.35 20.28 17.55C20.83 17.75 21.35 17.99 21.85 18.29C22.1 18.44 22.29 18.64 22.43 18.9C22.57 19.15 22.65 19.42 22.65 19.71V22.27H11.35ZM8.96 19.72V20.5H5.31C4.81 20.5 4.38 20.32 4.03 19.97C3.68 19.61 3.5 19.19 3.5 18.69V5.31C3.5 4.81 3.68 4.39 4.03 4.03C4.39 3.68 4.81 3.5 5.31 3.5H18.69C19.19 3.5 19.61 3.68 19.97 4.03C20.32 4.39 20.5 4.81 20.5 5.31V9.65C20.03 9.16 19.5 8.78 18.93 8.52C18.35 8.26 17.71 8.13 17 8.13C16.96 8.13 16.91 8.13 16.88 8.13C16.84 8.13 16.79 8.14 16.75 8.14V7.37H7.25V8.87H14.46C13.99 9.13 13.57 9.47 13.21 9.87C12.85 10.28 12.56 10.73 12.35 11.25H7.25V12.75H12.01C11.98 13.13 11.99 13.51 12.04 13.89C12.09 14.26 12.19 14.63 12.32 14.99C12.26 15.02 12.21 15.04 12.15 15.06C12.1 15.09 12.04 15.11 11.99 15.13H7.25V16.63H10.37C9.93 17.02 9.58 17.48 9.33 18.02C9.09 18.56 8.96 19.13 8.96 19.72Z'],
+  account: ['M6.02 17.29C6.87 16.66 7.8 16.16 8.8 15.8C9.8 15.43 10.87 15.25 12 15.25C13.13 15.25 14.2 15.43 15.2 15.8C16.2 16.16 17.13 16.66 17.98 17.29C18.6 16.61 19.09 15.82 19.45 14.92C19.82 14.02 20 13.05 20 12C20 9.78 19.22 7.9 17.66 6.34C16.1 4.78 14.22 4 12 4C9.78 4 7.9 4.78 6.34 6.34C4.78 7.9 4 9.78 4 12C4 13.05 4.18 14.02 4.55 14.92C4.91 15.82 5.4 16.61 6.02 17.29ZM9.69 11.81C9.06 11.18 8.75 10.41 8.75 9.5C8.75 8.59 9.06 7.82 9.69 7.19C10.32 6.56 11.09 6.25 12 6.25C12.91 6.25 13.68 6.56 14.31 7.19C14.94 7.82 15.25 8.59 15.25 9.5C15.25 10.41 14.94 11.18 14.31 11.81C13.68 12.44 12.91 12.75 12 12.75C11.09 12.75 10.32 12.44 9.69 11.81ZM12 21.5C10.68 21.5 9.44 21.25 8.29 20.76C7.13 20.26 6.13 19.58 5.27 18.73C4.42 17.87 3.74 16.87 3.24 15.71C2.75 14.56 2.5 13.32 2.5 12C2.5 10.68 2.75 9.44 3.24 8.29C3.74 7.13 4.42 6.13 5.27 5.27C6.13 4.42 7.13 3.74 8.29 3.24C9.44 2.75 10.68 2.5 12 2.5C13.32 2.5 14.56 2.75 15.71 3.24C16.87 3.74 17.87 4.42 18.73 5.27C19.58 6.13 20.26 7.13 20.76 8.29C21.25 9.44 21.5 10.68 21.5 12C21.5 13.32 21.25 14.56 20.76 15.71C20.26 16.87 19.58 17.87 18.73 18.73C17.87 19.58 16.87 20.26 15.71 20.76C14.56 21.25 13.32 21.5 12 21.5ZM14.61 19.56C15.45 19.27 16.19 18.87 16.84 18.35C16.19 17.84 15.46 17.45 14.64 17.17C13.82 16.89 12.94 16.75 12 16.75C11.06 16.75 10.18 16.89 9.36 17.17C8.53 17.44 7.8 17.84 7.16 18.35C7.81 18.87 8.55 19.27 9.39 19.56C10.23 19.85 11.1 20 12 20C12.9 20 13.77 19.85 14.61 19.56ZM13.25 10.75C13.58 10.41 13.75 10 13.75 9.5C13.75 9 13.58 8.59 13.25 8.25C12.91 7.92 12.5 7.75 12 7.75C11.5 7.75 11.09 7.92 10.75 8.25C10.42 8.59 10.25 9 10.25 9.5C10.25 10 10.42 10.41 10.75 10.75C11.09 11.08 11.5 11.25 12 11.25C12.5 11.25 12.91 11.08 13.25 10.75Z',
+    'M6.02 17.29C6.87 16.66 7.8 16.16 8.8 15.8C9.8 15.43 10.87 15.25 12 15.25C13.13 15.25 14.2 15.43 15.2 15.8C16.2 16.16 17.13 16.66 17.98 17.29C18.6 16.61 19.09 15.82 19.45 14.92C19.82 14.02 20 13.05 20 12C20 9.78 19.22 7.9 17.66 6.34C16.1 4.78 14.22 4 12 4C9.78 4 7.9 4.78 6.34 6.34C4.78 7.9 4 9.78 4 12C4 13.05 4.18 14.02 4.55 14.92C4.91 15.82 5.4 16.61 6.02 17.29ZM9.69 11.81C9.06 11.18 8.75 10.41 8.75 9.5C8.75 8.59 9.06 7.82 9.69 7.19C10.32 6.56 11.09 6.25 12 6.25C12.91 6.25 13.68 6.56 14.31 7.19C14.94 7.82 15.25 8.59 15.25 9.5C15.25 10.41 14.94 11.18 14.31 11.81C13.68 12.44 12.91 12.75 12 12.75C11.09 12.75 10.32 12.44 9.69 11.81ZM12 21.5C10.68 21.5 9.44 21.25 8.29 20.76C7.13 20.26 6.13 19.58 5.27 18.73C4.42 17.87 3.74 16.87 3.24 15.71C2.75 14.56 2.5 13.32 2.5 12C2.5 10.68 2.75 9.44 3.24 8.29C3.74 7.13 4.42 6.13 5.27 5.27C6.13 4.42 7.13 3.74 8.29 3.24C9.44 2.75 10.68 2.5 12 2.5C13.32 2.5 14.56 2.75 15.71 3.24C16.87 3.74 17.87 4.42 18.73 5.27C19.58 6.13 20.26 7.13 20.76 8.29C21.25 9.44 21.5 10.68 21.5 12C21.5 13.32 21.25 14.56 20.76 15.71C20.26 16.87 19.58 17.87 18.73 18.73C17.87 19.58 16.87 20.26 15.71 20.76C14.56 21.25 13.32 21.5 12 21.5Z'],
+  logout: ['M5.31 20.5C4.8 20.5 4.38 20.33 4.03 19.98C3.68 19.63 3.5 19.2 3.5 18.69V5.31C3.5 4.8 3.68 4.38 4.03 4.03C4.38 3.68 4.8 3.5 5.31 3.5H12.01V5H5.31C5.23 5 5.16 5.03 5.1 5.1C5.03 5.16 5 5.23 5 5.31V18.69C5 18.77 5.03 18.84 5.1 18.9C5.16 18.97 5.23 19 5.31 19H12.01V20.5H5.31ZM16.23 16.27L15.19 15.18L17.63 12.75H9.1V11.25H17.63L15.19 8.82L16.23 7.73L20.5 12L16.23 16.27Z', null]
+};
+const NAV_ADD = 'M10.86 21.2V13.14H2.8V10.86H10.86V2.8H13.14V10.86H21.2V13.14H13.14V21.2H10.86Z';
+function navIcon(k, label) {
+  const [o, f] = NAVP[k];
+  const fill = f ? `<path d="${f}" fill="currentColor"/>` : `<path d="${o}" fill="currentColor" stroke="currentColor" stroke-width="1"/>`;
+  return `<button class="ni" data-tab="${k}" aria-label="${label}"><svg class="o" width="24" height="24" viewBox="0 0 24 24"><path d="${o}" fill="currentColor"/></svg><svg class="f" width="24" height="24" viewBox="0 0 24 24">${fill}</svg></button>`;
+}
+nav.innerHTML = `<div class="nbg"></div><div class="nrow">
+  <div class="grp">${navIcon('home', 'Home')}${navIcon('patients', 'Pazienti')}</div>
+  <button class="nadd" data-tab="new" aria-label="Censisci un nuovo paziente"><svg width="24" height="24" viewBox="0 0 24 24"><path d="${NAV_ADD}" fill="#375ECC"/></svg></button>
+  <div class="grp">${navIcon('account', 'Account')}${navIcon('logout', 'Esci')}</div></div>`;
+screen.appendChild(nav);
+nav.addEventListener('click', e => {
+  const b = e.target.closest('[data-tab]'); if (!b) return;
+  const t = b.dataset.tab;
+  if (t === 'new') return openNewPatient();
+  if (t === 'logout') return confirmLogout();
+  if (R.stack.length === 1 && R.stack[0].name === t) { const sc = R.view.querySelector('.scroll'); sc && sc.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  resetTo([{ name: t, params: {} }], 'fade');
+});
+function setNav(name) {
+  const show = TAB_ROOTS.includes(name) && R.stack.length === 1;
+  nav.classList.toggle('hide', !show);
+  $$('[data-tab]', nav).forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+}
+
+/* ---------- overlays ---------- */
+function overlay(kind, html, opts = {}) {
+  const ov = document.createElement('div'); ov.className = 'ov';
+  const box = document.createElement('div'); box.className = kind; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true');
+  box.innerHTML = html;
+  screen.appendChild(ov); screen.appendChild(box);
+  requestAnimationFrame(() => requestAnimationFrame(() => { ov.classList.add('in'); box.classList.add('in'); }));
+  let closed = false;
+  const api = {
+    el: box,
+    close(cb) {
+      if (closed) return; closed = true; opts.onClose && opts.onClose();
+      ov.classList.remove('in'); box.classList.remove('in');
+      const fin = () => { ov.remove(); box.remove(); cb && cb(); };
+      if (RM.matches) fin(); else setTimeout(fin, kind === 'sheet' ? 380 : 260);
+    },
+    set(html2) { box.innerHTML = html2; }
+  };
+  if (opts.dismiss !== false) ov.addEventListener('click', () => api.close());
+  box.addEventListener('click', e => {
+    const t = e.target.closest('[data-act]'); if (!t) return;
+    const h = opts.actions && opts.actions[t.dataset.act];
+    if (h) { e.preventDefault(); h(t, api); }
+    else if (t.dataset.act === 'close') api.close();
+  });
+  if (opts.inputs) box.addEventListener('input', e => { const t = e.target.closest('[data-in]'); if (t && opts.inputs[t.dataset.in]) opts.inputs[t.dataset.in](t, api); });
+  return api;
+}
+let toastT;
+function toast(msg, icon = 'checkCircle') {
+  let t = $('.toast', screen);
+  if (!t) { t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); screen.appendChild(t); }
+  t.innerHTML = `${ic(icon, 20)}<span>${esc(msg)}</span>`;
+  t.classList.remove('in'); void t.offsetWidth; t.classList.add('in');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('in'), 2400);
+}
+function bump(el) { if (!el) return; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+
+/* =========================================================
+   COMPONENTS
+   ========================================================= */
+function header({ back: b, title, sub, share = false, subSm = false }) {
+  return `<header class="hdr">${SB}
+    <div class="top">${b ? `<button class="back" data-act="${b.act || 'back'}">${ic('back', 16)}${esc(b.label)}</button>` : '<span></span>'}</div>
+    <div class="trow"><div><h1>${esc(title)}</h1>${sub ? `<div class="sub${subSm ? ' sm' : ''}">${esc(sub)}</div>` : ''}</div>
+    ${share ? `<button class="iconbtn" data-act="share" aria-label="Condividi">${ic('share', 22)}</button>` : ''}</div></header>`;
+}
+function btn(label, act, variant = 'primary', extra = '') { return `<button class="btn ${variant}" data-act="${act}" ${extra}>${label}</button>`; }
+function badge(kind) {
+  return kind === 'ok' ? `<span class="badge ok"><i></i>Validata</span>` : `<span class="badge wip"><i></i>In corso</span>`;
+}
+function segs(n, done, cls = 'segs') { let s = ''; for (let i = 0; i < n; i++) s += `<span class="${i < done ? 'on' : ''}"><i></i></span>`; return `<div class="${cls}">${s}</div>`; }
+function nota(text, kind = 'info') { return `<div class="nota ${kind}">${ic(kind === 'warn' ? 'alert' : 'info', 20)}<span>${text}</span></div>`; }
+const MESI = ['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+const GIORNI = ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'];
+const isoToSlash = s => s ? s.split('-').reverse().join('/') : '';
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function dateBtnInner(iso, noIc) { return `${iso ? `<span>${isoToSlash(iso)}</span>` : '<span class="ph">gg/mm/aaaa</span>'}${noIc ? '' : ic('cal', 24)}`; }
+function dateBtn(k, iso, noIc) { return `<button class="box sel datef" data-act="date" data-k="${k}" data-v="${iso || ''}" ${noIc ? 'data-noic="1"' : ''} aria-haspopup="dialog">${dateBtnInner(iso, noIc)}</button>`; }
+function setDateBtn(t, iso) { t.dataset.v = iso; t.innerHTML = dateBtnInner(iso, t.dataset.noic); bump(t.querySelector('span')); }
+function openDatePicker({ value, max, title = 'Seleziona la data' }, cb) {
+  const today = isoDay(new Date());
+  let sel = value || '';
+  const st = D((sel || (max && max < today ? max : today)) + 'T12:00:00');
+  let y = st.getFullYear(), m = st.getMonth();
+  const long = iso => { const d = D(iso + 'T12:00:00'); return cap(`${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]} ${d.getFullYear()}`); };
+  const grid = () => {
+    const off = (new Date(y, m, 1).getDay() + 6) % 7, n = new Date(y, m + 1, 0).getDate();
+    let h = '<span></span>'.repeat(off);
+    for (let d = 1; d <= n; d++) {
+      const iso = `${y}-${p2(m + 1)}-${p2(d)}`;
+      h += `<button data-act="day" data-iso="${iso}" class="${iso === sel ? 'on' : ''} ${iso === today ? 'today' : ''}" ${max && iso > max ? 'disabled' : ''} aria-label="${long(iso)}">${d}</button>`;
+    }
+    return h;
+  };
+  const nextDis = () => !!max && `${y}-${p2(m + 1)}` >= max.slice(0, 7);
+  const html = `<div class="grab"></div><div class="between"><h2>${title}</h2><button class="iconbtn" data-act="close" aria-label="Chiudi">${ic('close', 22)}</button></div>
+    <div class="shs" id="dpSel">${sel ? long(sel) : 'Seleziona un giorno dal calendario'}</div>
+    <div class="calnav"><button data-act="prev" aria-label="Mese precedente">${ic('back', 20)}</button><b id="dpM">${MESI[m]} ${y}</b>
+      <button data-act="next" id="dpNext" aria-label="Mese successivo" ${nextDis() ? 'disabled' : ''}>${ic('chev', 20)}</button></div>
+    <div class="calwd">${['L','M','M','G','V','S','D'].map(c => `<span>${c}</span>`).join('')}</div>
+    <div class="calwrap"><div class="caldays" id="dpG">${grid()}</div></div>
+    <div class="btns" style="margin-top:16px"><button class="btn secondary" data-act="today">Oggi</button><button class="btn primary" data-act="ok" ${sel ? '' : 'disabled'}>Conferma</button></div>`;
+  const paint = (api, dir) => {
+    $('#dpM', api.el).textContent = `${MESI[m]} ${y}`; const g = $('#dpG', api.el); g.innerHTML = grid(); $('#dpNext', api.el).disabled = nextDis();
+    if (dir) animIn(g, [{ opacity: 0, transform: `translateX(${dir * 32}px)` }, { opacity: 1, transform: 'none' }], 280);
+  };
+  const upd = api => { $('#dpSel', api.el).textContent = sel ? long(sel) : 'Seleziona un giorno dal calendario'; $('[data-act=ok]', api.el).disabled = !sel; };
+  overlay('sheet', html, { actions: {
+    prev(t, api) { if (--m < 0) { m = 11; y--; } paint(api, -1); },
+    next(t, api) { if (++m > 11) { m = 0; y++; } paint(api, 1); },
+    day(t, api) { sel = t.dataset.iso; $$('#dpG button', api.el).forEach(b => b.classList.toggle('on', b === t)); upd(api); },
+    today(t, api) { sel = today; const d = new Date(); const dir = Math.sign((d.getFullYear() * 12 + d.getMonth()) - (y * 12 + m)); y = d.getFullYear(); m = d.getMonth(); paint(api, dir); upd(api); },
+    ok(t, api) { api.close(); cb(sel); }
+  } });
+}
+const metaPat = p => `${p.patologia} · ${ageOf(p)} anni · ${p.sesso}`;
+
+function pcard(p, home = false) {
+  const dr = isDraft(p);
+  let line;
+  if (dr) line = `<span class="metaline">Aggiornata: ${rel(p.assessment.updatedAt)}</span>`;
+  else if (deceased(p) && !home) line = `<span class="metaline">Deceduto il ${isoToDisp(deceased(p).date)}</span>`;
+  else line = `<span class="metaline">Validata il: ${fDate(p.assessment.validatedAt)}</span>`;
+  return `<article class="pcard">
+    <div><div class="code">${esc(fullName(p))}</div><div class="pat">${esc(p.patologia)}</div></div>
+    <button class="iconbtn share" data-act="share" aria-label="Condividi">${ic('share', 20)}</button>
+    <div class="meta"><span class="st ${dr ? '' : 'ok'}"><i></i>Stato: <b>${dr ? 'In corso' : 'Validata'}</b></span>${line}</div>
+    <div class="act">${dr ? `<button class="btn primary sm" data-act="openP" data-code="${p.code}">Continua</button>`
+      : `<button class="btn secondary sm" data-act="openP" data-code="${p.code}">Visualizza</button>`}</div>
+  </article>`;
+}
+function openPatient(code, from) {
+  const p = P(code); if (!p) return;
+  if (isDraft(p)) go('assessment', { code });
+  else go('patient', { code, from });
+}
+
+/* =========================================================
+   SCREENS · ACCESSO
+   ========================================================= */
+SCREENS.login = {
+  render: () => `<div class="loginhero">${SB.replace('class="sb"', 'class="sb" style="margin:0 -24px"')}
+      <div class="logo" style="color:#fff">${LOGO}</div>
+      <p>Comprehensive Geriatric Assessment<br>for Cardiovascular Disease</p></div>
+    <div class="loginsheet">
+      <h2>Accedi</h2><div class="muted" style="font-size:14px;line-height:20px;margin-top:6px">Inserisci le credenziali fornite dal tuo centro.</div>
+      <div class="form">
+        <div class="field"><label for="em">Email istituzionale</label><div class="box"><input id="em" type="email" value="${DOC.email}" autocomplete="username"></div></div>
+        <div class="field"><label for="pw">Password</label><div class="box"><input id="pw" type="password" value="demo-cgassist" autocomplete="current-password">
+          <button class="iconbtn" data-act="eye" aria-label="Mostra password" style="color:var(--blue);padding:0">${ic('eye', 24)}</button></div></div>
+        <div style="margin-top:-11px"><button class="link" data-act="na" style="font-size:12px;padding:4px 0">Password dimenticata?</button></div>
+      </div>
+      <div style="flex:1"></div>
+      <button class="btn primary" data-act="login" style="flex:none">Accedi</button>
+    </div>`,
+  actions: {
+    eye(t, _, el) { const i = $('#pw', el); const show = i.type === 'password'; i.type = show ? 'text' : 'password'; t.innerHTML = ic(show ? 'eyeOff' : 'eye', 22); },
+    login(t, _, el) {
+      if (!$('#em', el).value.trim() || !$('#pw', el).value) return toast('Inserisci email e password', 'alert');
+      t.innerHTML = '<span class="spin"></span>'; setTimeout(() => go('twofa', {}, 'push'), 650);
+    }
+  }
+};
+SCREENS.twofa = {
+  render: () => `<header class="hdr">${SB}<div class="top"><button class="back" data-act="back">${ic('back', 16)}Torna indietro</button></div>
+      <div class="trow"><h1>Verifica in due passaggi</h1></div></header>
+    <div class="scroll"><div class="body center" style="padding-top:32px;gap:0">
+      <div class="circ lg">${ic('shield', 34)}</div>
+      <div style="font-size:18px;line-height:22px;font-weight:700;margin-top:12px">Inserisci il codice a 6 cifre</div>
+      <div class="muted" style="font-size:14px;line-height:20px;margin-top:12px">Inserisci il codice che hai ricevuto all’email<br>${DOC.email}</div>
+      <div class="otp" id="otp">${'<input inputmode="numeric" maxlength="1" aria-label="Cifra">'.repeat(6)}</div>
+      <div class="muted" style="font-size:13px;margin-top:24px" id="resend">Non hai ricevuto il codice? <b style="color:var(--text);font-weight:600">Riprova tra <span id="cd">00:45</span></b></div>
+    </div></div>
+    <div class="bb flat0"><div class="btns"><button class="btn primary" data-act="verify" id="vbtn" disabled>Verifica e accedi</button></div></div>`,
+  init(el) {
+    const ins = $$('#otp input', el);
+    const upd = () => { const ok = ins.every(i => /\d/.test(i.value)); $('#vbtn', el).disabled = !ok; };
+    ins.forEach((inp, i) => {
+      inp.addEventListener('input', () => {
+        inp.value = inp.value.replace(/\D/g, '').slice(-1);
+        inp.classList.toggle('fill', !!inp.value);
+        if (inp.value && ins[i + 1]) ins[i + 1].focus();
+        upd();
+      });
+      inp.addEventListener('keydown', e => { if (e.key === 'Backspace' && !inp.value && ins[i - 1]) { ins[i - 1].focus(); ins[i - 1].value = ''; ins[i - 1].classList.remove('fill'); upd(); } if (e.key === 'Enter') $('#vbtn', el).click(); });
+      inp.addEventListener('paste', e => { const d = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6); if (!d) return; e.preventDefault(); d.split('').forEach((c, j) => { if (ins[j]) { ins[j].value = c; ins[j].classList.add('fill'); } }); (ins[d.length] || ins[5]).focus(); upd(); });
+    });
+    setTimeout(() => ins[0].focus({ preventScroll: true }), 420);
+    let s = 45; const tick = () => {
+      const cd = $('#cd', el); if (!cd || !el.isConnected) return clearInterval(R.cdT);
+      s--; if (s <= 0) { clearInterval(R.cdT); $('#resend', el).innerHTML = `Non hai ricevuto il codice? <button class="link" data-act="resend" style="font-size:13px">Invia di nuovo</button>`; return; }
+      cd.textContent = `00:${p2(s)}`;
+    };
+    clearInterval(R.cdT); R.cdT = setInterval(tick, 1000);
+  },
+  actions: {
+    resend(t, p, el) { toast('Nuovo codice inviato'); refresh(); },
+    verify(t) { t.innerHTML = '<span class="spin"></span>'; setTimeout(() => { clearInterval(R.cdT); resetTo(['home'], 'up'); }, 700); }
+  }
+};
+
+/* =========================================================
+   HOME
+   ========================================================= */
+SCREENS.home = {
+  nav: true,
+  render() {
+    const drafts = S.patients.filter(isDraft).sort((a, b) => D(b.assessment.updatedAt) - D(a.assessment.updatedAt));
+    const valid = S.patients.filter(p => !isDraft(p)).sort((a, b) => D(b.assessment.validatedAt) - D(a.assessment.validatedAt));
+    return `${SB}<div class="scroll">
+      <div class="hero"><div class="logo" style="color:#fff">${LOGO}</div><h1>${DOC.name}</h1><div class="c">${DOC.centro}</div>
+        <div class="newcard"><b>Censisci un nuovo paziente</b><span>Registra un nuovo paziente per iniziare la valutazione.</span>
+          <button class="plus" data-act="new" aria-label="Censisci un nuovo paziente"><svg width="24" height="24" viewBox="0 0 24 24"><path d="${NAV_ADD}" fill="#375ECC"/></svg></button></div></div>
+      <div class="homebody">
+        <section class="hsec"><div class="sechead"><h2>Valutazioni in corso</h2>${drafts.length ? `<button class="link" data-act="all" data-f="draft">Tutte</button>` : ''}</div>
+          <div class="hlist">${drafts.length ? drafts.slice(0, 3).map(p => pcard(p, true)).join('') : `<div class="empty">Nessuna valutazione in corso.<br><button class="link" data-act="new">Censisci un nuovo paziente</button></div>`}</div></section>
+        <section class="hsec"><div class="sechead"><h2>Valutazioni concluse</h2>${valid.length ? `<button class="link" data-act="all" data-f="validated">Tutte</button>` : ''}</div>
+          <div class="hlist">${valid.length ? valid.slice(0, 3).map(p => pcard(p, true)).join('') : `<div class="empty">Le valutazioni validate compariranno qui.</div>`}</div></section>
+      </div></div>`;
+  },
+  actions: {
+    new: () => openNewPatient(),
+    all: t => resetTo([{ name: 'patients', params: { chip: t.dataset.f } }], 'fade'),
+    openP: t => openPatient(t.dataset.code, 'Home')
+  }
+};
+
+/* =========================================================
+   PAZIENTI + FILTRI
+   ========================================================= */
+const F = { q: '', chip: 'all', pat: '', st: '', from: '2026-01-01', to: '' };
+function filterPatients() {
+  return S.patients.filter(p => {
+    if (F.q && !fullName(p).toLowerCase().includes(F.q.toLowerCase().trim().replace(/\s+/g, ' '))) return false;
+    if (F.chip === 'draft' && !isDraft(p)) return false;
+    if (F.chip === 'validated' && isDraft(p)) return false;
+    if (F.pat && p.patologia !== F.pat) return false;
+    if (F.st === 'draft' && !isDraft(p)) return false;
+    if (F.st === 'validated' && isDraft(p)) return false;
+    if (F.st === 'dead' && !deceased(p)) return false;
+    const c = isoDay(p.createdAt);
+    if (F.from && c < F.from) return false;
+    if (F.to && c > F.to) return false;
+    return true;
+  });
+}
+const advCount = () => (F.pat ? 1 : 0) + (F.st ? 1 : 0) + (F.from !== '2026-01-01' || F.to ? 1 : 0);
+function patientsList() {
+  const list = filterPatients();
+  const dr = list.filter(isDraft).sort((a, b) => D(b.assessment.updatedAt) - D(a.assessment.updatedAt));
+  const va = list.filter(p => !isDraft(p)).sort((a, b) => D(b.assessment.validatedAt) - D(a.assessment.validatedAt));
+  if (!list.length) return `<div class="empty">Nessun paziente corrisponde alla ricerca.<br><button class="link" data-act="clearAll">Azzera ricerca e filtri</button></div>`;
+  return `${dr.length ? `<div class="listhead" style="margin:0 0 4px">In corso</div>${dr.map(p => pcard(p)).join('')}` : ''}
+    ${va.length ? `<div class="listhead" style="margin:${dr.length ? 20 : 0}px 0 4px">Validate</div>${va.map(p => pcard(p)).join('')}` : ''}`;
+}
+const CHIPS = [['all', 'Tutte'], ['draft', 'In corso'], ['validated', 'Validate']];
+SCREENS.patients = {
+  nav: true,
+  render(prm) {
+    if (prm.chip) { F.chip = prm.chip; delete prm.chip; }
+    return `<header class="hdr">${SB}<div class="trow"><div><h1>Pazienti</h1><div class="sub">${DOC.centro} · ${S.patients.length} pazienti</div></div></div></header>
+      <div class="scroll"><div class="body" style="padding-bottom:110px">
+        <div class="searchrow"><label class="search">${ic('search', 20)}<input data-in="q" placeholder="Cerca" value="${esc(F.q)}" aria-label="Cerca per nome o cognome"></label>
+          <button class="fbtn" data-act="filters" aria-label="Filtra pazienti">${ic('tune', 22)}${advCount() ? '<span class="dot"></span>' : ''}</button></div>
+        <div class="chips" role="tablist">${CHIPS.map(([k, l]) => `<button class="chip ${F.chip === k ? 'on' : ''}" data-act="chip" data-k="${k}" role="tab" aria-selected="${F.chip === k}">${l}</button>`).join('')}</div>
+        <div id="plist" style="display:flex;flex-direction:column;gap:12px;margin-top:16px">${patientsList()}</div>
+      </div></div>`;
+  },
+  inputs: { q(t, _, el) { F.q = t.value; $('#plist', el).innerHTML = patientsList(); } },
+  actions: {
+    chip(t) { F.chip = t.dataset.k; refresh(); },
+    openP: t => openPatient(t.dataset.code, 'Pazienti'),
+    clearAll() { Object.assign(F, { q: '', chip: 'all', pat: '', st: '', from: '2026-01-01', to: '' }); refresh(); },
+    filters: () => openFilters()
+  }
+};
+function selectBox(id, label, ph, opts, val) {
+  const cur = opts.find(o => o[0] === val);
+  return `<div class="field"><span class="flabel">${label}</span>
+    <button class="box sel" data-act="dd" data-id="${id}" aria-expanded="false">${cur ? `<span>${esc(cur[1])}</span>` : `<span class="ph">${ph}</span>`}${ic('down', 20)}</button>
+    <div class="dd" id="dd-${id}"><div><ul>${opts.map(o => `<li><button data-act="pick" data-id="${id}" data-v="${esc(o[0])}" class="${o[0] === val ? 'on' : ''}">${esc(o[1])}</button></li>`).join('')}</ul></div></div></div>`;
+}
+function toggleDD(t, root) {
+  const id = t.dataset.id; const dd = $('#dd-' + id, root); const open = !dd.classList.contains('open');
+  $$('.dd.open', root).forEach(x => x.classList.remove('open')); $$('.box.sel.open', root).forEach(x => x.classList.remove('open'));
+  dd.classList.toggle('open', open); t.classList.toggle('open', open); t.setAttribute('aria-expanded', open);
+}
+function openFilters() {
+  const tmp = { pat: F.pat, st: F.st, from: F.from, to: F.to };
+  const html = () => `<div class="grab"></div><div class="between"><h2>Filtra pazienti</h2><button class="iconbtn" data-act="close" aria-label="Chiudi">${ic('close', 22)}</button></div>
+    <div class="form g24">
+      ${selectBox('pat', 'Patologia', 'Seleziona la patologia', [['', 'Tutte le patologie'], ...PATOLOGIE.map(x => [x, x])], tmp.pat)}
+      ${selectBox('st', 'Stato', 'Seleziona lo stato', [['', 'Tutti gli stati'], ['draft', 'In corso'], ['validated', 'Validata'], ['dead', 'Deceduto']], tmp.st)}
+      <div style="display:flex;flex-direction:column;gap:16px"><div class="grouplab" style="margin:0">DATA DI REGISTRAZIONE</div>
+      <div class="fgrid"><div class="field"><span class="flabel">Dal</span>${dateBtn('from', tmp.from, 1)}</div>
+        <div class="field"><span class="flabel">Al</span>${dateBtn('to', tmp.to, 1)}</div></div></div>
+    </div>
+    <div class="btns" style="margin-top:16px"><button class="btn secondary" data-act="reset">Azzera</button><button class="btn primary" data-act="apply">Mostra risultati</button></div>`;
+  const sh = overlay('sheet', html(), {
+    actions: {
+      dd: (t, api) => toggleDD(t, api.el),
+      pick(t, api) { tmp[t.dataset.id] = t.dataset.v; api.set(html()); },
+      reset(t, api) { Object.assign(tmp, { pat: '', st: '', from: '2026-01-01', to: '' }); api.set(html()); },
+      apply(t, api) { Object.assign(F, tmp); api.close(); refresh(); },
+      date(t) { const k = t.dataset.k; openDatePicker({ value: tmp[k], max: isoDay(new Date()), title: k === 'from' ? 'Registrati dal' : 'Registrati fino al' }, iso => { tmp[k] = iso; setDateBtn(t, iso); }); }
+    },
+    inputs: { from: t => tmp.from = t.value, to: t => tmp.to = t.value }
+  });
+}
+
+/* =========================================================
+   ACCOUNT
+   ========================================================= */
+SCREENS.account = {
+  nav: true,
+  render: () => `<header class="hdr">${SB}<div class="trow"><h1>Account</h1></div></header>
+    <div class="scroll"><div class="body" style="padding-bottom:110px">
+      <div class="card prof"><div class="avatar">${DOC.ini}</div><div><b>${DOC.name}</b><small>${DOC.role} · ${DOC.centro}</small><small>${DOC.email}</small></div></div>
+      <div class="card acct"><h3>Sicurezza</h3>
+        <button class="arow" data-act="na">${ic('lock', 20)}<span>Cambia password</span>${ic('chev', 20, 'chev')}</button>
+        <button class="arow" data-act="na">${ic('phone', 20)}<span>Dispositivi e sessioni</span>${ic('chev', 20, 'chev')}</button></div>
+      <div class="card acct"><h3>Supporto</h3>
+        <button class="arow" data-act="na">${ic('book', 20)}<span>Guida all’uso</span>${ic('chev', 20, 'chev')}</button>
+        <button class="arow" data-act="na">${ic('doc', 20)}<span>Informativa privacy</span>${ic('chev', 20, 'chev')}</button>
+        <div class="arow last" style="cursor:default">${ic('info', 20)}<span>Versione</span><span class="vv" style="flex:none">App 1.0 · Algoritmi ${ALG}</span></div>
+        <button class="arow onlyfull" data-act="reset">${ic('reset', 20)}<span>Ripristina dati demo</span></button></div>
+      <button class="btn danger" data-act="logout" style="flex:none">${ic('logout', 18)}Esci</button>
+    </div></div>`,
+  actions: { logout: () => confirmLogout(), reset: () => confirmReset() }
+};
+function confirmLogout() {
+  if (!nav.classList.contains('hide')) $$('[data-tab]', nav).forEach(b => b.classList.toggle('on', b.dataset.tab === 'logout'));
+  overlay('modal', `<div class="circ red">${ic('logout', 30)}</div><h2>Sei sicuro di voler uscire?</h2>
+    <p>Le valutazioni in corso sono già salvate: potrai riprenderle al prossimo accesso.</p>
+    <div class="mbtns"><button class="btn primary" data-act="yes">Esci</button><button class="link" data-act="close">Annulla</button></div>`,
+    { actions: { yes: (t, api) => api.close(() => resetTo(['login'], 'fade')) }, onClose: () => setNav(R.stack[R.stack.length - 1].name) });
+}
+function confirmReset() {
+  overlay('modal', `<div class="circ">${ic('reset', 28)}</div><h2>Ripristinare i dati demo?</h2>
+    <p>Pazienti e valutazioni creati durante la navigazione verranno eliminati e torneranno i dati di esempio.</p>
+    <div class="mbtns"><button class="btn primary" data-act="yes">Ripristina</button><button class="link" data-act="close">Annulla</button></div>`,
+    { actions: { yes: (t, api) => api.close(() => { resetData(); Object.assign(F, { q: '', chip: 'all', pat: '', st: '', from: '2026-01-01', to: '' }); resetTo(['login'], 'fade'); toast('Dati demo ripristinati'); }) } });
+}
+
+/* =========================================================
+   NUOVO PAZIENTE (sheet)
+   ========================================================= */
+function openNewPatient() {
+  const f = { nome: '', cognome: '', pat: '', dob: '', sesso: '' };
+  const dobIso = () => parseDob(f.dob);
+  const dobAge = () => { const iso = dobIso(); return iso ? ageOf({ nascita: iso }) : NaN; };
+  const dobErr = () => {
+    if (f.dob.length < 10) return '';
+    const iso = dobIso(); if (!iso) return 'Data non valida';
+    if (iso > isoDay(new Date())) return 'La data non può essere nel futuro';
+    const a = dobAge(); if (a < 18) return 'Il paziente deve essere maggiorenne'; if (a > 120) return 'Data non valida';
+    return '';
+  };
+  const valid = () => f.nome.trim() && f.cognome.trim() && f.pat && f.dob.length === 10 && !dobErr() && f.sesso;
+  const txt = (k, label) => `<div class="field"><label for="np-${k}">${label}</label><div class="box"><input id="np-${k}" data-in="${k}" autocomplete="off" autocapitalize="words" spellcheck="false" value="${esc(f[k])}"></div></div>`;
+  const form = () => `<div class="grab"></div><div class="between"><h2>Nuovo paziente</h2><button class="iconbtn" data-act="close" aria-label="Chiudi">${ic('close', 22)}</button></div>
+    <div class="shs">Inserisci i dati per censire il paziente</div>
+    <div class="form">
+      ${txt('nome', 'Nome')}
+      ${txt('cognome', 'Cognome')}
+      ${selectBox('pat', 'Patologia cardiaca primaria', 'Seleziona la patologia', PATOLOGIE.map(x => [x, x]), f.pat)}
+      <div class="field"><label for="np-dob">Data di nascita</label><div class="box" id="np-dobbox"><input id="np-dob" data-in="dob" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="es. 10/08/1950" aria-describedby="np-doberr" value="${esc(f.dob)}"></div>
+        <div class="ferr" id="np-doberr" role="alert" hidden></div></div>
+      <div class="field"><span class="flabel">Sesso</span><div class="fgrid g8">
+        <button class="opt big ${f.sesso === 'M' ? 'on' : ''}" data-act="sex" data-v="M">Maschio<span class="rd"></span></button>
+        <button class="opt big ${f.sesso === 'F' ? 'on' : ''}" data-act="sex" data-v="F">Femmina<span class="rd"></span></button></div></div>
+    </div>
+    <div class="btns"><button class="btn secondary" data-act="close">Annulla</button><button class="btn primary" data-act="create" ${valid() ? '' : 'disabled'}>Crea paziente</button></div>`;
+  const updBtn = api => { $('[data-act=create]', api.el).disabled = !valid(); };
+  const done = p => `<div class="grab"></div><div class="center" style="animation:fadein .35s both">
+      <div class="circ ok">${ic('check', 30)}</div>
+      <h2 style="margin-top:12px">Paziente registrato</h2>
+      <div class="codebox"><small>PAZIENTE</small><div class="code pname">${esc(fullName(p))}</div><div class="d">${esc(p.patologia)} · ${ageOf(p)} anni · ${p.sesso} · ${DOC.centro}</div></div>
+      <div class="mbtns" style="display:flex;flex-direction:column;gap:16px;margin-top:32px;align-items:center">
+        <button class="btn primary" data-act="start" style="width:100%;flex:none">Inizia valutazione</button>
+        <button class="link" data-act="home">Torna alla Home</button></div></div>`;
+  // Step 0: liberatoria firmata dal paziente prima del censimento (testo segnaposto)
+  let agreed = false;
+  const LOREM = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.';
+  const LOREM2 = 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
+  const consent = () => `<div class="grab"></div><div class="between"><h2>Liberatoria</h2><button class="iconbtn" data-act="close" aria-label="Chiudi">${ic('close', 22)}</button></div>
+    <div class="shs">Leggi l'informativa con il paziente e raccogli il suo consenso prima di procedere</div>
+    <div class="consent" tabindex="0" aria-label="Testo della liberatoria">
+      <h3>1. Finalità della valutazione</h3><p>${LOREM}</p><p>${LOREM2}</p>
+      <h3>2. Trattamento dei dati personali</h3><p>${LOREM2}</p><p>${LOREM}</p>
+      <h3>3. Diritti dell'interessato</h3><p>${LOREM}</p>
+      <h3>4. Consenso</h3><p>${LOREM2}</p>
+    </div>
+    <button class="opt left agree ${agreed ? 'on' : ''}" data-act="agree" role="checkbox" aria-checked="${agreed}"><span class="cb">${ic('check', 14)}</span>Il paziente ha letto la liberatoria e acconsente al trattamento dei dati</button>
+    <div class="btns"><button class="btn secondary" data-act="close">Annulla</button><button class="btn primary" data-act="next" ${agreed ? '' : 'disabled'}>Continua</button></div>`;
+  let created;
+  const clean = v => v.trim().replace(/\s+/g, ' ').replace(/(^|[\s'’-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+  overlay('sheet', consent(), {
+    actions: {
+      agree(t, api) { agreed = !agreed; t.classList.toggle('on', agreed); t.setAttribute('aria-checked', agreed); $('[data-act=next]', api.el).disabled = !agreed; },
+      next(t, api) { if (!agreed) return; api.set(`<div style="animation:fadein .3s both">${form()}</div>`); api.el.scrollTop = 0; },
+      dd: (t, api) => toggleDD(t, api.el),
+      pick(t, api) { f.pat = t.dataset.v; const sel = $('[data-act=dd]', api.el); sel.innerHTML = `<span>${esc(f.pat)}</span>${ic('down', 20)}`; toggleDD(sel, api.el); $$('[data-act=pick]', api.el).forEach(b => b.classList.toggle('on', b.dataset.v === f.pat)); updBtn(api); },
+      sex(t, api) { f.sesso = t.dataset.v; $$('[data-act=sex]', api.el).forEach(b => b.classList.toggle('on', b === t)); updBtn(api); },
+      create(t, api) {
+        t.innerHTML = '<span class="spin"></span>';
+        setTimeout(() => {
+          created = { code: nextCode(), nome: clean(f.nome), cognome: clean(f.cognome), nascita: dobIso(), centro: DOC.centro, patologia: f.pat, sesso: f.sesso, createdAt: new Date().toISOString(), assessment: emptyAssessment(), followups: [] };
+          S.patients.push(created); save();
+          api.set(done(created));
+          if (R.stack.length === 1 && ['home', 'patients'].includes(R.stack[0].name)) refresh();
+        }, 500);
+      },
+      start: (t, api) => api.close(() => go('assessment', { code: created.code })),
+      home: (t, api) => api.close(() => { if (!(R.stack.length === 1 && R.stack[0].name === 'home')) resetTo(['home'], 'fade'); })
+    },
+    inputs: {
+      nome(t, api) { f.nome = t.value; updBtn(api); },
+      cognome(t, api) { f.cognome = t.value; updBtn(api); },
+      dob(t, api) { // maschera gg/mm/aaaa: inserisce le barre da sola
+        const d = t.value.replace(/\D/g, '').slice(0, 8);
+        t.value = d.slice(0, 2) + (d.length > 2 ? '/' + d.slice(2, 4) : '') + (d.length > 4 ? '/' + d.slice(4) : '');
+        f.dob = t.value;
+        const err = dobErr();
+        const box = $('#np-dobbox', api.el), e = $('#np-doberr', api.el);
+        box.classList.toggle('bad', !!err); e.hidden = !err; e.textContent = err;
+        updBtn(api);
+      }
+    }
+  });
+}
+
+/* =========================================================
+   SCHEDA VALUTAZIONE (bozza)
+   ========================================================= */
+const ROWDEF = {
+  badl: { t: 'BADL', d: 'Da compilare', score: p => `${Calc.badl(p.assessment.cga.badl)} / 6` },
+  mna: { t: 'MNA-SF', d: 'Da compilare', score: p => `${Calc.mna(p.assessment.cga.mna)} / 14` },
+  sppb: { t: 'SPPB', d: 'Da compilare', score: p => `${Calc.sppb(p.assessment.cga.sppb)} / 12` },
+  charlson: { t: 'Patologie croniche', d: 'Charlson Comorbidity Index', score: p => `${Calc.charlson(p.assessment.diary.charlson, ageOf(p))}` },
+  therapy: { t: 'Terapia farmacologica', d: 'Classi farmacologiche', score: p => `${p.assessment.diary.therapy.filter(Boolean).length} classi`, lab: 'Selezionate' },
+  labs: { t: 'Esami ematici', d: 'NT-proBNP, Hb, albumina, creatinina' },
+  echo: { t: 'Ecocardiogramma', d: 'Setto, FE, volume AS, PAPs' }
+};
+function mrow(p, k, g) {
+  const st = secState(p, k), d = ROWDEF[k];
+  const s1 = st === 'done' ? `<span class="s1 done">Completato</span>` : `<span class="s1">${d.d}</span>`;
+  const sc = st === 'done' && d.score ? `<small>${d.lab || 'Punteggio'}: <b>${d.score(p)}</b></small>` : '';
+  return `<button class="mrow" data-act="open" data-g="${g}" data-k="${k}">${st === 'done' ? ic('checkCircle', 30, 'ck') : ''}
+    <span class="tx"><b>${d.t}</b>${s1}${sc}</span>${ic('chev', 22, 'chev')}</button>`;
+}
+SCREENS.assessment = {
+  render({ code, review }) {
+    const p = P(code); const a = p.assessment;
+    const rv = !isDraft(p), edited = rv && D(a.updatedAt) > D(a.validatedAt);
+    const cDone = CGA_KEYS.filter(k => secState(p, k) === 'done').length, dDone = DIARY_KEYS.filter(k => secState(p, k) === 'done').length;
+    const ok = allDone(p);
+    return `${header({ back: review ? { label: 'Scheda paziente' } : { label: rootLabel(), act: 'home' }, title: fullName(p), sub: 'Valutazione baseline' })}
+    <div class="scroll"><div class="body">
+      <div class="between">${rv ? badge('ok') : badge('wip')}<span class="metaline">${rv ? (edited ? `Modificata: ${rel(a.updatedAt)}` : `Validata il: ${fDate(a.validatedAt)}`) : `Salvato automaticamente: ${rel(a.updatedAt)}`}</span></div>
+      <div class="card"><div class="chead"><h3>Dati paziente</h3><button class="link" data-act="na">Modifica</button></div>
+        <div class="grid2"><div><small>Nome e cognome</small><b>${esc(fullName(p))}</b></div><div><small>Patologia</small><b>${esc(p.patologia)}</b></div>
+        <div><small>Data di nascita</small><b>${p.nascita ? isoToSlash(p.nascita) : '-'}</b></div><div><small>Sesso</small><b>${p.sesso === 'M' ? 'Maschio' : 'Femmina'}</b></div></div></div>
+      <div class="card"><div class="chead"><h3>CGA · Valutazione geriatrica</h3><span class="cnt">${cDone} / 3</span></div>${segs(3, cDone, 'csegs')}
+        <div class="mrows">${CGA_KEYS.map(k => mrow(p, k, 'cga')).join('')}</div></div>
+      <div class="card"><div class="chead"><h3>Dati clinico strumentali</h3><span class="cnt">${dDone} / 4</span></div>${segs(4, dDone, 'csegs')}
+        <div class="mrows">${DIARY_KEYS.map(k => mrow(p, k, 'diary')).join('')}</div></div>
+      <div class="card pad16"><h3>Score e classificazione</h3><div class="lockline">${ic('lock', 18)}<span>${rv
+        ? `Risultati calcolati il ${fDate(a.validatedAt)}. ${hasGass(p) ? 'GASS-TAVR, fenotipo di vulnerabilità' : 'Fenotipo di vulnerabilità'} e Charlson saranno ricalcolati alla nuova validazione.`
+        : `${hasGass(p) ? 'GASS-TAVR, fenotipo di vulnerabilità' : 'Fenotipo di vulnerabilità'} e Charlson saranno calcolati alla validazione.`}</span></div></div>
+    </div></div>
+    <div class="bb ${ok ? 'nob' : ''}"><div class="btns"><button class="btn primary" data-act="validate" ${ok ? '' : 'disabled'}>${rv ? 'Valida e ricalcola risultati' : ok ? 'Valida e calcola risultati' : 'Valida valutazione'}</button></div>
+      ${ok ? '' : '<div class="cap">Completa CGA e dati clinico strumentali per validare la valutazione.</div>'}</div>`;
+  },
+  init(el) { // anima i segmenti al primo ingresso
+    $$('.csegs span.on', el).forEach(s => { s.classList.remove('on'); requestAnimationFrame(() => requestAnimationFrame(() => s.classList.add('on'))); });
+  },
+  actions: {
+    home: () => back(R.stack.length - 1),
+    open(t, { code }) { const g = t.dataset.g; const i = STEPS[g].findIndex(s => s.k === t.dataset.k); go('step', { code, g, i }); },
+    validate: (t, { code }) => openValidate(code)
+  }
+};
+
+/* =========================================================
+   WIZARD (CGA · Dati clinico strumentali · Follow-up)
+   ========================================================= */
+const STEPS = {
+  cga: [{ k: 'badl', t: 'BADL', s: 'Attività di base della vita quotidiana' }, { k: 'mna', t: 'MNA-SF', s: 'Mini Nutritional Assessment – Short Form' }, { k: 'sppb', t: 'SPPB', s: 'Short Physical Performance Battery' }],
+  diary: [{ k: 'charlson', t: 'Patologie croniche', s: 'Charlson Comorbidity Index · age-adjusted' }, { k: 'therapy', t: 'Terapia farmacologica', s: 'Classi farmacologiche assunte in cronico' },
+    { k: 'labs', t: 'Esami ematici', s: 'Parametri di laboratorio' }, { k: 'echo', t: 'Ecocardiogramma', s: 'Parametri ecocardiografici' }],
+  fu: [{ k: 'status', t: 'Status vitale' }, { k: 'badl', t: 'BADL' }, { k: 'mna', t: 'MNA-SF' }, { k: 'labs', t: 'Esami ematici' }, { k: 'echo', t: 'Ecocardiogramma' }]
+};
+const GROUP_LAB = { cga: 'CGA · Valutazione geriatrica', diary: 'Dati clinico strumentali', fu: 'Follow up' };
+const LAST_LAB = { cga: 'Salva CGA', diary: 'Salva dati', fu: 'Salva follow up' };
+function src(p, g) { return g === 'cga' ? p.assessment.cga : g === 'diary' ? p.assessment.diary : p.fuDraft; }
+function fuSteps(p) { return p.fuDraft && p.fuDraft.status === 'deceduto' ? 1 : STEPS.fu.length; }
+const fuBlank = () => ({ status: 'vivo', date: isoDay(new Date()), badl: Array(6).fill(null), mna: { a: Array(5).fill(null), peso: '', altezza: '' },
+  labs: { date: '', ntprobnp: '', hb: '', alb: '', creat: '' }, labsNA: false, echo: { date: '', setto: '', fe: '', vol: '', paps: '' }, echoNA: false });
+// esami ematici / ecocardiogramma: completi oppure dichiarati non eseguiti
+const fuDiagOk = (f, k) => !!f[k] && (f[k + 'NA'] || Object.values(f[k]).every(v => v !== ''));
+function fuReady(p) { const f = p.fuDraft; if (!f || !f.date) return false; if (f.status === 'deceduto') return true;
+  return Calc.badl(f.badl) !== null && Calc.mna(f.mna) !== null && fuDiagOk(f, 'labs') && fuDiagOk(f, 'echo'); }
+function touchG(p, g) { if (g === 'fu') save(); else touch(p); }
+
+const R_STEP = {
+  badl(p, s) {
+    const sc = Calc.badl(s.badl);
+    return `<div class="qtitle">Quali attività svolge in autonomia il paziente?</div>
+      ${BADL.map((l, i) => { const v = s.badl[i]; return `<div class="badlrow ${v !== null ? 'done' : ''}"><span>${l}</span><div class="yn">
+        <button class="${v === true ? 'on' : ''}" data-act="badl" data-i="${i}" data-v="1" aria-pressed="${v === true}">Sì<span class="rd"></span></button>
+        <button class="${v === false ? 'on' : ''}" data-act="badl" data-i="${i}" data-v="0" aria-pressed="${v === false}">No<span class="rd"></span></button></div></div>`; }).join('')}
+      <div class="scorebar"><span>Punteggio BADL</span><b data-score>${sc ?? '-'} / 6</b></div>`;
+  },
+  mna(p, s) {
+    const m = s.mna, b = Calc.bmi(m), sc = Calc.mna(m);
+    return `${MNA.map((t, i) => `<div class="qcard"><div class="qh"><h4>${i + 1}. ${t}</h4><div class="qs">${L1}</div></div>
+        ${[0, 1].map(j => `<button class="opt ${m.a[i] === j ? 'on' : ''}" data-act="mna" data-i="${i}" data-v="${j}">${L2}<span class="rd"></span></button>`).join('')}</div>`).join('')}
+      <div class="qcard"><div class="qh"><h4>6. Indice di massa corporea</h4><div class="qs">${L1}</div></div>
+        <div class="fgrid"><div class="field"><label>Peso</label><div class="box"><input inputmode="decimal" data-in="peso" placeholder="es. 78" value="${esc(m.peso)}"><span class="unit">kg</span></div></div>
+        <div class="field"><label>Altezza</label><div class="box"><input inputmode="decimal" data-in="alt" placeholder="es. 178" value="${esc(m.altezza)}"><span class="unit">cm</span></div></div></div>
+        <div class="between" style="font-size:12px;color:var(--muted);padding-bottom:12px"><span>BMI calcolato</span><b style="color:var(--text);font-size:15px;font-weight:600" data-bmi>${Number.isFinite(b) ? fmt1(b) : '-'} kg/m²</b></div></div>
+      <div class="scorebar"><span>Punteggio MNA-SF</span><b data-score>${sc ?? '-'} / 14</b></div>`;
+  },
+  sppb(p, s) {
+    const x = s.sppb, sc = Calc.sppb(x);
+    const tfield = (k, lab, ph) => { const na = !!x[k + 'NA'];
+      return `<div class="tbody" data-tb="${k}"><div class="field ${na ? 'dis' : ''}"><label>${lab}</label><div class="box"><input inputmode="decimal" data-in="time" data-k="${k}" placeholder="${ph}" value="${na ? '' : esc(x[k])}" ${na ? 'disabled' : ''}><span class="unit">s</span></div></div>
+      <div><button class="chrono" data-act="chrono" data-k="${k}" ${na ? 'disabled' : ''}>${ic('timer', 16)}<span>Avvia cronometro</span></button></div></div>`; };
+    return `<div class="qcard" style="gap:14px"><div class="qh" style="margin:0"><h4>1. Equilibrio</h4><div class="qs">${L1}</div></div>${tgRow('Test dell’equilibrio eseguibile?', 'balance', !x.balanceNA)}${tfield('balance', 'Tempo in equilibrio', 'Es. 7,4')}</div>
+      <div class="qcard" style="gap:14px"><div class="qh" style="margin:0"><h4>2. Velocità del cammino</h4><div class="qs">${L1}</div></div>${tgRow('Test della velocità eseguibile?', 'gait', !x.gaitNA)}${tfield('gait', 'Tempo impiegato', 'Es. 5,2')}</div>
+      <div class="qcard" style="gap:14px"><div class="qh" style="margin:0"><h4>3. Alzarsi da una sedia</h4><div class="qs">${L1}</div></div>
+        ${[0, 1, 2].map(q => `<div class="qgroup"><div class="qsub" style="margin:0">3.${q + 1}&nbsp; Lorem ipsum dolor sit?</div><div class="opts">
+          ${[0, 1, 2].map(j => `<button class="opt left ${x.chair[q][j] ? 'on' : ''}" data-act="chair" data-q="${q}" data-j="${j}"><span class="cb">${ic('check', 14)}</span>${L2}</button>`).join('')}</div></div>`).join('')}</div>
+      <div class="scorebar"><span>Punteggio SPPB</span><b data-score>${sc ?? '-'} / 12</b></div>`;
+  },
+  charlson(p, s) {
+    const age = ageOf(p), sc = Calc.charlson(s.charlson, age), band = age >= 80 ? '≥ 80' : age >= 70 ? '70–79' : age >= 60 ? '60–69' : age >= 50 ? '50–59' : '< 50';
+    return `<div class="qtitle">Seleziona le patologie croniche presenti</div>
+      ${CH_ORDER.map(i => `<button class="opt left ${s.charlson[i] ? 'on' : ''}" data-act="ch" data-i="${i}"><span class="cb">${ic('check', 14)}</span>${CHARLSON[i][0]}</button>`).join('')}
+      ${noneOpt('chnone', s.charlsonNone)}
+      <div class="agecard"><div class="between"><span style="font-weight:600">Correzione per età</span><b>+${Calc.agePts(age)} pt</b></div>
+        <div class="metaline" style="margin-top:4px">Calcolata automaticamente dalla data di nascita (${age} anni, fascia ${band}).</div></div>
+      <div class="scorebar"><span>Charlson age-adjusted</span><b data-score>${sc}</b></div>`;
+  },
+  therapy(p, s) {
+    const n = s.therapy.filter(Boolean).length;
+    return `<div class="qtitle">Seleziona tutte le classi assunte dal paziente</div>
+      ${THERAPY.map((l, i) => i === LOOP
+        ? `<div class="optgroup ${s.therapy[i] ? 'on' : ''}" id="loopg"><button class="opt left ${s.therapy[i] ? 'on' : ''}" data-act="th" data-i="${i}"><span class="cb">${ic('check', 14)}</span>${l}</button>
+            <div class="expand ${s.therapy[i] ? 'open' : ''}"><div><div class="inner"><div class="field"><label>Dosaggio giornaliero</label>
+            <div class="box"><input inputmode="decimal" data-in="dose" placeholder="Es. 50" value="${esc(s.loopDose)}"><span class="unit">mg/die</span></div></div></div></div></div></div>`
+        : `<button class="opt left ${s.therapy[i] ? 'on' : ''}" data-act="th" data-i="${i}"><span class="cb">${ic('check', 14)}</span>${l}</button>`).join('')}
+      ${noneOpt('thnone', s.therapyNone)}
+      <div class="scorebar"><span>Classi selezionate</span><b data-score>${thScore(s)}</b></div>`;
+  },
+  labs(p, s) { return fieldsStep(s.labs, LABS, 'labs', 'Esami ematici eseguiti', s.labsNA); },
+  echo(p, s) { return fieldsStep(s.echo, ECHO, 'echo', 'Ecocardiogramma eseguito', s.echoNA); },
+  status(p, s) {
+    const dead = s.status === 'deceduto', r = p.assessment.results;
+    return `<div style="display:flex;flex-direction:column;gap:16px"><div class="field"><span class="flabel">Status vitale</span><div class="fgrid g8">
+        <button class="opt big ${!dead ? 'on' : ''}" data-act="vital" data-v="vivo">Vivo<span class="rd"></span></button>
+        <button class="opt big ${dead ? 'on' : ''}" data-act="vital" data-v="deceduto">Deceduto<span class="rd"></span></button></div></div>
+      <div class="field"><span class="flabel">${dead ? 'Data del decesso' : 'Data della visita'}</span>${dateBtn('fudate', s.date, 1)}</div>
+      <div class="expand ${dead ? 'open' : ''}" style="margin-top:${dead ? 0 : -16}px"><div>${nota('Paziente deceduto: il follow-up si chiude senza rivalutazioni (BADL, MNA-SF, esami ematici ed ecocardiogramma). L’esito verrà registrato nel percorso del paziente.', 'warn')}</div></div></div>
+      <div class="card pad16" style="margin-top:20px"><h3 style="margin-bottom:8px">Riferimento baseline</h3><div class="kvs">
+        <div class="kv"><span>Validata il</span><b>${fDate(p.assessment.validatedAt)}</b></div>
+        <div class="kv"><span>BADL</span><b>${r.badl} / 6</b></div><div class="kv"><span>MNA-SF</span><b>${r.mna} / 14</b></div></div></div>`;
+  }
+};
+function fieldsStep(o, defs, k, tgl, na) {
+  const dis = na ? 'dis' : '';
+  return `<div class="qtitle">Inserisci i seguenti parametri</div>
+    <div style="margin:4px 0 4px">${tgRow(tgl, k, !na)}</div>
+    ${defs.map(f => f.date ? `<div class="field ${dis}"><span class="flabel">${f.l}</span>${dateBtn(f.k, na ? '' : o[f.k])}</div>` : `<div class="field ${dis}"><label>${f.l}</label><div class="box">${f.date
+      ? dateBtnInner(o[f.k])
+      : `<input inputmode="decimal" data-in="fld" data-k="${f.k}" placeholder="${f.ph}" value="${na ? '' : esc(o[f.k])}" ${na ? 'disabled' : ''}><span class="unit">${f.u}</span>`}</div></div>`).join('')}
+    <div class="scorebar"><span>Campi compilati</span><b data-score>${fldScore(o, na)}</b></div>`;
+}
+const fldScore = (o, na) => na ? 'N/A' : `${Object.values(o).filter(v => v !== '').length} / 5`;
+const thScore = s => { const n = s.therapy.filter(Boolean).length; return n ? `${n}` : s.therapyNone ? '0' : '-'; };
+function noneOpt(act, on) { return `<button class="opt left none ${on ? 'on' : ''}" data-act="${act}"><span class="cb">${ic('check', 14)}</span>Nessuna delle precedenti</button>`; }
+function tgRow(label, k, on) {
+  return `<button class="tgrow" data-act="tgl" data-k="${k}" role="switch" aria-checked="${on}"><span>${label}</span><span class="tg ${on ? '' : 'off'}" aria-hidden="true"><b>${on ? 'SÌ' : 'NO'}</b><i></i></span></button>`;
+}
+function setTg(t, on) { t.setAttribute('aria-checked', on); const g = $('.tg', t); g.classList.toggle('off', !on); $('b', g).textContent = on ? 'SÌ' : 'NO'; }
+function setFieldsDis(scope, dis) {
+  $$('.field', scope).forEach(f => f.classList.toggle('dis', dis));
+  $$('input', scope).forEach(i => { i.disabled = dis; if (dis) i.value = ''; });
+  $$('.chrono', scope).forEach(b => b.disabled = dis);
+  $$('.box.datef', scope).forEach(b => { if (dis) { b.dataset.v = ''; b.innerHTML = dateBtnInner('', b.dataset.noic); } });
+}
+function markLeave(p, g, k) {
+  if (g !== 'diary') return;
+  if (k === 'charlson') p.assessment.diary.charlsonDone = true;
+  if (k === 'therapy') p.assessment.diary.therapyDone = true;
+  touch(p);
+}
+function setScore(el, txt) { const b = $('[data-score]', el); if (b && b.textContent !== txt) { b.textContent = txt; bump(b); } }
+SCREENS.step = {
+  render({ code, g, i }) {
+    const p = P(code), st = STEPS[g][i], s = src(p, g);
+    const n = g === 'fu' ? fuSteps(p) : STEPS[g].length; const last = i === n - 1;
+    const sub = g === 'fu' ? fullName(p) : st.s;
+    const dis = g === 'fu' && last && !fuReady(p) ? 'disabled' : '';
+    return `<header class="hdr">${SB}<div class="top"><button class="saveexit" data-act="saveexit">Salva ed esci ${ic('close', 16)}</button></div>
+      <div class="trow"><div><h1>${st.t}</h1><div class="sub sm">${esc(sub)}</div></div></div>
+      <div class="stepper"><div class="lab"><span>${GROUP_LAB[g]}</span><span>${i + 1}/${n}</span></div>${segs(n, i)}</div></header>
+      <div class="scroll"><div class="body ${['mna', 'sppb', 'status'].includes(st.k) ? 'g20' : 'g10'}">${R_STEP[st.k](p, s)}</div></div>
+      <div class="bb nob"><div class="btns">${btn('Precedente', 'prev', i === 0 ? 'ghost' : 'secondary')}${btn(last ? LAST_LAB[g] : 'Successivo', 'next', 'primary', `id="nextb" ${dis}`)}</div></div>`;
+  },
+  init(el, { i }) { const sp = $$('.segs span', el)[i]; if (sp) requestAnimationFrame(() => requestAnimationFrame(() => sp.classList.add('on'))); },
+  inputs: {
+    peso(t, { code, g }, el) { const p = P(code), m = src(p, g).mna; m.peso = t.value; mnaUpd(p, g, el); },
+    alt(t, { code, g }, el) { const p = P(code), m = src(p, g).mna; m.altezza = t.value; mnaUpd(p, g, el); },
+    time(t, { code, g }, el) { const p = P(code); src(p, g).sppb[t.dataset.k] = t.value; touchG(p, g); const v = Calc.sppb(src(p, g).sppb); setScore(el, `${v ?? '-'} / 12`); },
+    dose(t, { code, g }) { const p = P(code); src(p, g).loopDose = t.value; touchG(p, g); },
+    fld(t, { code, g, i }, el) { const p = P(code), k = STEPS[g][i].k, o = src(p, g)[k]; o[t.dataset.k] = t.value; touchG(p, g);
+      setScore(el, fldScore(o, src(p, g)[k + 'NA'])); updNext(p, el); },
+    fudate(t, { code }, el) { const p = P(code); p.fuDraft.date = t.value; save(); updNext(p, el); }
+  },
+  actions: {
+    badl(t, { code, g }, el) {
+      const p = P(code), s = src(p, g), i = +t.dataset.i; s.badl[i] = t.dataset.v === '1'; touchG(p, g);
+      const row = t.closest('.badlrow'); row.classList.add('done'); $$('button', row).forEach(b => { const on = b === t; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+      setScore(el, `${Calc.badl(s.badl) ?? '-'} / 6`); updNext(p, el);
+    },
+    mna(t, { code, g }, el) {
+      const p = P(code), m = src(p, g).mna; m.a[+t.dataset.i] = +t.dataset.v;
+      $$(`[data-act=mna][data-i="${t.dataset.i}"]`, el).forEach(b => b.classList.toggle('on', b === t)); mnaUpd(p, g, el);
+    },
+    chair(t, { code, g }, el) { const p = P(code), x = src(p, g).sppb; const q = +t.dataset.q, j = +t.dataset.j; x.chair[q][j] = !x.chair[q][j];
+      t.classList.toggle('on', x.chair[q][j]); touchG(p, g); setScore(el, `${Calc.sppb(x) ?? '-'} / 12`); },
+    chrono(t, { code, g }, el) {
+      const p = P(code), x = src(p, g).sppb, k = t.dataset.k, inp = $(`[data-k="${k}"][data-in=time]`, el);
+      if (R.chrono && R.chrono.k === k) { // stop
+        clearInterval(R.chrono.int); const v = fmt1((performance.now() - R.chrono.t0) / 1000); R.chrono = null;
+        inp.value = v; x[k] = v; touchG(p, g); t.classList.remove('run'); $('span', t).textContent = 'Avvia cronometro';
+        setScore(el, `${Calc.sppb(x) ?? '-'} / 12`); return;
+      }
+      if (R.chrono) { clearInterval(R.chrono.int); const pb = $(`.chrono[data-k="${R.chrono.k}"]`, el); if (pb) { pb.classList.remove('run'); $('span', pb).textContent = 'Avvia cronometro'; } }
+      const t0 = performance.now();
+      R.chrono = { k, t0, int: setInterval(() => { if (!el.isConnected) { clearInterval(R.chrono && R.chrono.int); R.chrono = null; return; } inp.value = fmt1((performance.now() - t0) / 1000); }, 100) };
+      t.classList.add('run'); $('span', t).textContent = 'Ferma cronometro';
+    },
+    ch(t, { code, g }, el) { const p = P(code), s = src(p, g); const i = +t.dataset.i; s.charlson[i] = !s.charlson[i]; t.classList.toggle('on', s.charlson[i]);
+      if (s.charlson[i] && s.charlsonNone) { s.charlsonNone = false; $('[data-act=chnone]', el).classList.remove('on'); }
+      touchG(p, g); setScore(el, `${Calc.charlson(s.charlson, ageOf(p))}`); },
+    chnone(t, { code, g }, el) { const p = P(code), s = src(p, g); s.charlsonNone = !s.charlsonNone; t.classList.toggle('on', s.charlsonNone);
+      if (s.charlsonNone) { s.charlson.fill(false); $$('[data-act=ch]', el).forEach(b => b.classList.remove('on')); }
+      touchG(p, g); setScore(el, `${Calc.charlson(s.charlson, ageOf(p))}`); },
+    thnone(t, { code, g }, el) { const p = P(code), s = src(p, g); s.therapyNone = !s.therapyNone; t.classList.toggle('on', s.therapyNone);
+      if (s.therapyNone) { s.therapy.fill(false); $$('[data-act=th]', el).forEach(b => b.classList.remove('on'));
+        const gr = $('#loopg', el); if (gr) { gr.classList.remove('on'); $('.expand', gr).classList.remove('open'); } }
+      touchG(p, g); setScore(el, thScore(s)); },
+    tgl(t, { code, g, i }, el) {
+      const p = P(code), s = src(p, g), k = t.dataset.k, on = t.getAttribute('aria-checked') !== 'true';
+      setTg(t, on);
+      if (k === 'balance' || k === 'gait') {
+        const x = s.sppb; x[k + 'NA'] = !on; if (!on) x[k] = '';
+        if (!on && R.chrono && R.chrono.k === k) { clearInterval(R.chrono.int); R.chrono = null; const cb = $(`.chrono[data-k="${k}"]`, el); cb.classList.remove('run'); $('span', cb).textContent = 'Avvia cronometro'; }
+        setFieldsDis($(`[data-tb="${k}"]`, el), !on); touchG(p, g); setScore(el, `${Calc.sppb(x) ?? '-'} / 12`);
+      } else {
+        s[k + 'NA'] = !on; if (!on) Object.keys(s[k]).forEach(f => s[k][f] = '');
+        setFieldsDis($('.body', el), !on); touchG(p, g); setScore(el, fldScore(s[k], !on)); updNext(p, el);
+      }
+    },
+    th(t, { code, g }, el) {
+      const p = P(code), s = src(p, g); const i = +t.dataset.i; s.therapy[i] = !s.therapy[i]; t.classList.toggle('on', s.therapy[i]); touchG(p, g);
+      if (i === LOOP) { const gr = $('#loopg', el); gr.classList.toggle('on', s.therapy[i]); $('.expand', gr).classList.toggle('open', s.therapy[i]); if (s.therapy[i]) setTimeout(() => $('[data-in=dose]', gr).focus({ preventScroll: true }), 300); }
+      if (s.therapy[i] && s.therapyNone) { s.therapyNone = false; $('[data-act=thnone]', el).classList.remove('on'); }
+      setScore(el, thScore(s));
+    },
+    date(t, prm, el) {
+      const p = P(prm.code), k = t.dataset.k, sk = STEPS[prm.g][prm.i].k;
+      const title = k === 'fudate' ? (p.fuDraft.status === 'deceduto' ? 'Data del decesso' : 'Data della visita') : sk === 'labs' ? 'Data del prelievo' : 'Data dell’esame';
+      openDatePicker({ value: t.dataset.v, max: isoDay(new Date()), title }, iso => {
+        setDateBtn(t, iso);
+        if (k === 'fudate') { p.fuDraft.date = iso; save(); updNext(p, el); }
+        else { const o = src(p, prm.g)[sk]; o.date = iso; touchG(p, prm.g); setScore(el, `${Object.values(o).filter(v => v !== '').length} / 5`); updNext(p, el); }
+      });
+    },
+    vital(t, { code }) { const p = P(code); if (p.fuDraft.status === t.dataset.v) return; p.fuDraft.status = t.dataset.v; save(); refresh(); },
+    prev(t, prm) { const p = P(prm.code); stopChrono(); markLeave(p, prm.g, STEPS[prm.g][prm.i].k);
+      if (prm.i === 0) back(); else replace('step', { ...prm, i: prm.i - 1 }, 'pop'); },
+    next(t, prm) {
+      const p = P(prm.code); stopChrono(); markLeave(p, prm.g, STEPS[prm.g][prm.i].k);
+      const n = prm.g === 'fu' ? fuSteps(p) : STEPS[prm.g].length;
+      if (prm.i < n - 1) return replace('step', { ...prm, i: prm.i + 1 }, 'push');
+      if (prm.g === 'cga') { back(); toast('CGA salvata'); }
+      else if (prm.g === 'diary') { back(); toast('Dati clinico strumentali salvati'); }
+      else confirmFU(p);
+    },
+    saveexit(t, prm) { const p = P(prm.code); stopChrono(); markLeave(p, prm.g, STEPS[prm.g][prm.i].k); back(); toast(prm.g === 'fu' ? 'Follow-up salvato in bozza' : isDraft(p) ? 'Bozza salvata' : 'Modifiche salvate'); }
+  }
+};
+function stopChrono() { if (R.chrono) { clearInterval(R.chrono.int); R.chrono = null; } }
+function mnaUpd(p, g, el) {
+  touchG(p, g); const m = src(p, g).mna, b = Calc.bmi(m);
+  const bb = $('[data-bmi]', el); if (bb) bb.textContent = `${Number.isFinite(b) ? fmt1(b) : '-'} kg/m²`;
+  setScore(el, `${Calc.mna(m) ?? '-'} / 14`); updNext(p, el);
+}
+function updNext(p, el) { const r = R.stack[R.stack.length - 1]; if (r.params.g !== 'fu') return; const b = $('#nextb', el); const n = fuSteps(p); if (b && r.params.i === n - 1) b.disabled = !fuReady(p); }
+
+/* =========================================================
+   VALIDAZIONE + RISULTATI + REPORT
+   ========================================================= */
+function openValidate(code) {
+  const p = P(code), gass = hasGass(p);
+  const items = [...(gass ? ['GASS-TAVR'] : []), 'Fenotipo di vulnerabilità', 'Charlson age-adjusted'];
+  const re = !isDraft(p);
+  overlay('modal', `<div class="circ">${ic('listCheck', 30)}</div><h2>${re ? 'Vuoi validare le modifiche?' : 'Vuoi validare la valutazione?'}</h2>
+    <p>Verranno ${re ? 'ricalcolati' : 'calcolati'} ${gass ? 'GASS-TAVR, fenotipo di vulnerabilità' : 'fenotipo di vulnerabilità'} e Charlson age-adjusted con l’algoritmo ${ALG}.</p>
+    <div class="mbtns"><button class="btn primary" data-act="go">Valida e calcola</button><button class="link" data-act="close">Annulla</button></div>`, {
+    actions: {
+      go(t, api) {
+        api.set(`<div class="ring"></div><h2>Calcolo in corso</h2><p>Algoritmo ${ALG}</p>
+          <div class="calc">${items.map((t, i) => `<div data-c="${i}"><span class="dot"></span>${t}</div>`).join('')}</div>`);
+        const rows = $$('.calc div', api.el); let k = 0;
+        const stepC = () => {
+          if (k > 0) { rows[k - 1].classList.remove('act'); rows[k - 1].classList.add('done'); rows[k - 1].querySelector('.dot').innerHTML = ic('check', 13); }
+          if (k < rows.length) { rows[k].classList.add('act'); k++; setTimeout(stepC, RM.matches ? 10 : 520); return; }
+          p.assessment.firstValidatedAt = p.assessment.firstValidatedAt || p.assessment.validatedAt;
+          p.assessment.results = Calc.results(p); p.assessment.status = 'validated'; p.assessment.validatedAt = p.assessment.results.at;
+          if (!p.assessment.firstValidatedAt) p.assessment.firstValidatedAt = p.assessment.results.at; save();
+          setTimeout(() => api.close(() => go('results', { code, from: 'new', anim: true })), RM.matches ? 10 : 380);
+        };
+        stepC();
+      }
+    }, dismiss: false
+  });
+}
+// Profilo complessivo (regola dimostrativa): sfavorevole se GASS-TAVR alto o fenotipo con 2+ dimensioni,
+// intermedio se GASS-TAVR intermedio o 1 dimensione, altrimenti favorevole.
+// Per i pazienti senza stenosi aortica il GASS-TAVR non entra nella regola.
+function profile(r, gass = true) {
+  const n = r.dims.filter(Boolean).length, gc = gass ? r.gClass : null;
+  if (gc === 'Alto' || n >= 2) return { k: 'bad', t: 'Profilo sfavorevole', d: 'Possibile controindicazione', c: 'c-bad', i: 'xCircle' };
+  if (gc === 'Intermedio' || n === 1) return { k: 'mid', t: 'Profilo intermedio', d: 'Valutazione multidisciplinare', c: 'c-wip', i: 'alert' };
+  return { k: 'ok', t: 'Profilo favorevole', d: 'Possibile beneficio dall’intervento', c: 'c-ok', i: 'checkCircle' };
+}
+const profLine = (r, gass) => { const pr = profile(r, gass); return `<div class="rprof"><b class="${pr.c}">${pr.t}</b><span class="sep">|</span><span>${pr.d}</span></div>`; };
+const gColor = c => c === 'Basso' ? 'c-ok' : c === 'Intermedio' ? 'c-wip' : 'c-bad';
+const CHEV_DN = '<svg class="mchev" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 15.4L6 9.4L7.4 8L12 12.6L16.6 8L18 9.4L12 15.4Z"/></svg>';
+// livello dei singoli elementi (dimostrativo): fattore sfavorevole / dimensione presente = Medio, altrimenti Basso
+const itemLvl = bad => bad ? 'mid' : 'ok';
+const mrow2 = (title, sub, k) => `<div class="mrow2"><span><b>${title}</b><small>${sub}</small></span>${pill(k)}</div>`;
+function modBlock(cls, title, sub, k, rows, l21) {
+  return `<div class="mod ${cls}"><button class="mh" data-act="mod" aria-expanded="false"><span class="mt"><span class="mtt"><b class="${l21 ? 'l21' : ''}">${title}</b><small>${sub}</small></span>${pill(k)}</span>${CHEV_DN}</button>
+    <div class="mb"><div><div class="mrows2">${rows}</div></div></div></div>`;
+}
+SCREENS.results = {
+  render(prm) {
+    const p = P(prm.code), r = p.assessment.results, gass = hasGass(p);
+    // Figma "Modifiche 04": entro 24h → back "Modifica valutazione" + PDF | Scheda paziente;
+    // dopo 24h → back "Scheda paziente" + PDF | Modifica; dopo il follow-up → solo "Visualizza PDF"
+    const st = !canEdit(p) ? 'locked' : fuOpen(p) ? 'open' : 'fresh';
+    const anim = prm.anim; prm.anim = false;
+    const dims = [['Disabilità funzionale', 'BADL'], ['Rischio di malnutrizione', 'MNA-SF'], ['Performance fisica', 'SPPB']];
+    const mods = [
+      gass ? modBlock('gass', 'GASS-TAVR', `${r.g} fattori su 4 sfavorevoli`, gassLvl(r), r.factors.map(f => mrow2(f.k, f.v, itemLvl(f.bad))).join('')) : '',
+      modBlock('', 'Fenotipo di vulnerabilità', `Fenotipo F${r.f}`, fenoLvl(r), dims.map(([l, t], i) => mrow2(l, t, itemLvl(r.dims[i]))).join('')),
+      modBlock('', 'Charlson Comorbidity Index', `<i>Valore calcolato:</i> ${r.charlson}`, chLvl(r),
+        [...r.chItems.map(i => [CHARLSON[i][0], CHARLSON[i][1]]), [r.ageBand, r.agePts]].map(([l, v]) => `<div class="mrow2"><span><b>${l}</b></span><span class="pt">+${v}</span></div>`).join(''), true)
+    ].filter(Boolean).join('<div class="mdiv"></div>');
+    return `${header({ back: st === 'fresh' ? { label: 'Modifica valutazione', act: 'editback' } : { label: 'Scheda paziente', act: 'patient' }, title: fullName(p), sub: 'Valutazione baseline', share: true })}
+    <div class="scroll"><div class="body ${anim ? 'stagger' : ''}">
+      <div class="between">${badge('ok')}<span class="metaline">Validata il: ${fDate(r.at)} - ${fTime(r.at)}</span></div>
+      <div class="card pad16 gwrap"><h3>Risultati valutazione baseline</h3>${gauge(profile(r, gass).k, riskScore(r, gass))}</div>
+      <div class="mods">${mods}</div>
+      <div class="ind"><h3>Indicazioni cliniche</h3><p>Qui compariranno le indicazioni associate al profilo (es. pre-abilitazione nutrizionale o fisica), con testi validati dal team medico.</p></div>
+      ${nota('Strumento a supporto: non sostituisce il giudizio del medico.', 'warn')}
+      <div class="resfoot"><div class="foot">Algoritmo <b>${r.alg}</b>  |  Calcolato il <b>${fDate(r.at)} - ${fTime(r.at)}</b><br>Operatore <b>${r.by}</b></div></div>
+    </div></div>
+    <div class="bb flat"><div class="btns g10">${st === 'locked' ? btn('Visualizza PDF', 'pdf')
+      : btn('PDF', 'pdf', 'secondary') + (st === 'fresh' ? btn('Scheda paziente', 'patient') : btn('Modifica', 'edit'))}</div></div>`;
+  },
+  init(el, prm) { animGauge(el); const p = P(prm.code); if (canEdit(p)) liveUnlock(el, p, prm, SCREENS.results); },
+  actions: {
+    mod(t) { const m = t.closest('.mod'); const o = m.classList.toggle('open'); t.setAttribute('aria-expanded', o); },
+    pdf: (t, { code }) => go('report', { code }),
+    // "Modifica valutazione" (back link): torna alla valutazione se è la schermata precedente, altrimenti la apre
+    editback(t, { code }) { const pr = R.stack[R.stack.length - 2];
+      if (pr && pr.name === 'assessment' && pr.params.code === code) back(); else replace('assessment', { code }, 'pop'); },
+    edit(t, { code }) { if (canEdit(P(code))) go('assessment', { code }); },
+    patient(t, { code }) { // torna alla scheda paziente se è già nello storico, altrimenti la apre sopra la tab corrente
+      const i = R.stack.findIndex(r => r.name === 'patient' && r.params.code === code);
+      if (i >= 0) back(R.stack.length - 1 - i); else resetTo([rootTab(), { name: 'patient', params: { code, from: rootLabel() } }], 'push');
+    }
+  }
+};
+function rootLabel() { const n = rootTab().name; return n === 'patients' ? 'Pazienti' : n === 'account' ? 'Account' : 'Home'; }
+SCREENS.report = {
+  render({ code, from }) {
+    const p = P(code), r = p.assessment.results, now = new Date();
+    const fus = p.followups;
+    return `${header({ back: { label: from || 'Valutazione' }, title: fullName(p), sub: 'Report paziente' })}
+    <div class="scroll"><div class="body"><div class="paper" style="animation:rise .5s var(--ease) both">
+      <div class="phead">${LOGO}<span>Report paziente</span></div>
+      <div class="kv"><span>Paziente</span><b>${esc(fullName(p))}</b></div><div class="kv"><span>Centro</span><b>${p.centro}</b></div>
+      <div class="kv"><span>Patologia</span><b>${esc(p.patologia)}</b></div><div class="kv"><span>Età · sesso</span><b>${ageOf(p)} anni · ${p.sesso}</b></div>
+      <div class="kv"><span>Valutazione</span><b>Baseline · ${fDate(r.at)}</b></div>
+      <h5>Risultati valutazione baseline</h5>
+      ${(k => `<div class="prisk"><small>Rischio geriatrico</small><span class="pv ${LVL[k].c}">${PILL_IC[k]}${LVL[k].t}</span></div>`)(profile(r, hasGass(p)).k)}
+      ${hasGass(p) ? `<div class="rrow"><div class="l"><b>GASS-TAVR</b><small>Rischio: <span style="color:var(--text);font-weight:500">${r.gClass}</span></small></div><div class="r">${r.g} fattori<br>su 4 sfavorevoli</div></div>` : ''}
+      <div class="rrow"><div class="l"><b>Fenotipo di vulnerabilità</b><small>${r.fName}</small></div><div class="r">Fenotipo F${r.f}</div></div>
+      <div class="rrow"><div class="l"><b>Charlson Comorbidity Index<br>age-adjusted</b></div><div class="r">Valore: ${r.charlson}</div></div>
+      <h5>Valutazione geriatrica</h5>
+      <div class="rrow"><div class="l"><b>BADL</b></div><div class="r">${r.badl} / 6</div></div>
+      <div class="rrow"><div class="l"><b>MNA-SF</b></div><div class="r">${r.mna} / 14</div></div>
+      <div class="rrow"><div class="l"><b>SPPB</b></div><div class="r">${r.sppb} / 12</div></div>
+      ${fus.length ? `<h5>Follow-up</h5>${fus.map(f => `<div class="rrow"><div class="l"><b>Follow-up ${f.n}</b><small>${isoToDisp(f.date)}</small></div>
+        <div class="r">${f.status === 'deceduto' ? 'Deceduto' : `Vivo<br>BADL ${f.badl}/6 · MNA-SF ${f.mna}/14`}</div></div>`).join('')}` : ''}
+      <h5>Indicazioni cliniche</h5>
+      <p class="muted">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+      <div class="pfoot">Supporto alla decisione clinica, non sostituisce il giudizio medico. Algoritmo ${r.alg} · Generato il ${fDate(now)} ${fTime(now)}</div>
+    </div></div></div>
+    <div class="bb"><div class="btns">${btn('Scarica PDF', 'dl', 'secondary')}${btn('Condividi', 'share')}</div></div>`;
+  },
+  actions: { dl: () => toast('Download del PDF non disponibile nel prototipo', 'info') }
+};
+
+/* =========================================================
+   SCHEDA PAZIENTE + FOLLOW-UP
+   ========================================================= */
+/* Livelli di rischio della scheda paziente: regole dimostrative, da validare con il team medico */
+const LVL = { ok: { t: 'Basso', c: 'c-ok', v: '--green' }, mid: { t: 'Medio', c: 'c-wip', v: '--orange' }, bad: { t: 'Alto', c: 'c-bad', v: '--red' } };
+const gassLvl = r => r.gClass === 'Basso' ? 'ok' : r.gClass === 'Intermedio' ? 'mid' : 'bad';
+const fenoLvl = r => r.f === 1 ? 'ok' : r.f <= 3 ? 'mid' : 'bad';
+const chLvl = r => r.charlson <= 4 ? 'ok' : r.charlson <= 6 ? 'mid' : 'bad';
+const PILL_IC = {
+  ok: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M7.06634 11.0663L11.7663 6.36634L10.833 5.43301L7.06634 9.19968L5.16634 7.29967L4.23301 8.23301L7.06634 11.0663ZM7.99967 14.6663C7.07745 14.6663 6.21079 14.4913 5.39967 14.1413C4.58856 13.7913 3.88301 13.3163 3.28301 12.7163C2.68301 12.1163 2.20801 11.4108 1.85801 10.5997C1.50801 9.78856 1.33301 8.9219 1.33301 7.99967C1.33301 7.07745 1.50801 6.21079 1.85801 5.39967C2.20801 4.58856 2.68301 3.88301 3.28301 3.28301C3.88301 2.68301 4.58856 2.20801 5.39967 1.85801C6.21079 1.50801 7.07745 1.33301 7.99967 1.33301C8.9219 1.33301 9.78856 1.50801 10.5997 1.85801C11.4108 2.20801 12.1163 2.68301 12.7163 3.28301C13.3163 3.88301 13.7913 4.58856 14.1413 5.39967C14.4913 6.21079 14.6663 7.07745 14.6663 7.99967C14.6663 8.9219 14.4913 9.78856 14.1413 10.5997C13.7913 11.4108 13.3163 12.1163 12.7163 12.7163C12.1163 13.3163 11.4108 13.7913 10.5997 14.1413C9.78856 14.4913 8.9219 14.6663 7.99967 14.6663Z"/></svg>',
+  mid: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M4.66634 8.66683H11.333V7.3335H4.66634V8.66683ZM7.99967 14.6668C7.07745 14.6668 6.21079 14.4918 5.39967 14.1418C4.58856 13.7918 3.88301 13.3168 3.28301 12.7168C2.68301 12.1168 2.20801 11.4113 1.85801 10.6002C1.50801 9.78905 1.33301 8.92238 1.33301 8.00016C1.33301 7.07794 1.50801 6.21127 1.85801 5.40016C2.20801 4.58905 2.68301 3.8835 3.28301 3.2835C3.88301 2.6835 4.58856 2.2085 5.39967 1.8585C6.21079 1.5085 7.07745 1.3335 7.99967 1.3335C8.9219 1.3335 9.78856 1.5085 10.5997 1.8585C11.4108 2.2085 12.1163 2.6835 12.7163 3.2835C13.3163 3.8835 13.7913 4.58905 14.1413 5.40016C14.4913 6.21127 14.6663 7.07794 14.6663 8.00016C14.6663 8.92238 14.4913 9.78905 14.1413 10.6002C13.7913 11.4113 13.3163 12.1168 12.7163 12.7168C12.1163 13.3168 11.4108 13.7918 10.5997 14.1418C9.78856 14.4918 8.9219 14.6668 7.99967 14.6668Z"/></svg>',
+  bad: '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8.47468 11.1418C8.60245 11.0141 8.66634 10.8557 8.66634 10.6668C8.66634 10.4779 8.60245 10.3196 8.47468 10.1918C8.3469 10.0641 8.18856 10.0002 7.99967 10.0002C7.81079 10.0002 7.65245 10.0641 7.52468 10.1918C7.3969 10.3196 7.33301 10.4779 7.33301 10.6668C7.33301 10.8557 7.3969 11.0141 7.52468 11.1418C7.65245 11.2696 7.81079 11.3335 7.99967 11.3335C8.18856 11.3335 8.3469 11.2696 8.47468 11.1418ZM7.33301 8.66683H8.66634V4.66683H7.33301V8.66683ZM7.99967 14.6668C7.07745 14.6668 6.21079 14.4918 5.39967 14.1418C4.58856 13.7918 3.88301 13.3168 3.28301 12.7168C2.68301 12.1168 2.20801 11.4113 1.85801 10.6002C1.50801 9.78905 1.33301 8.92239 1.33301 8.00016C1.33301 7.07794 1.50801 6.21127 1.85801 5.40016C2.20801 4.58905 2.68301 3.8835 3.28301 3.2835C3.88301 2.6835 4.58856 2.2085 5.39967 1.8585C6.21079 1.5085 7.07745 1.3335 7.99967 1.3335C8.9219 1.3335 9.78856 1.5085 10.5997 1.8585C11.4108 2.2085 12.1163 2.6835 12.7163 3.2835C13.3163 3.8835 13.7913 4.58905 14.1413 5.40016C14.4913 6.21127 14.6663 7.07794 14.6663 8.00016C14.6663 8.92239 14.4913 9.78905 14.1413 10.6002C13.7913 11.4113 13.3163 12.1168 12.7163 12.7168C12.1163 13.3168 11.4108 13.7918 10.5997 14.1418C9.78856 14.4918 8.9219 14.6668 7.99967 14.6668Z"/></svg>'
+};
+const CHEV_F = '<svg class="chev" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.6 12L8 7.4L9.4 6L15.4 12L9.4 18L8 16.6L12.6 12Z"/></svg>';
+const pill = k => `<span class="pill ${LVL[k].c}">${PILL_IC[k]}${LVL[k].t}</span>`;
+const idxRow = (val, title, sub, k) => `<div class="irow"><span class="ival">${val}</span><span class="itx"><b>${title}</b><small>${sub}</small></span>${pill(k)}</div>`;
+/* Gauge: geometria dal frame Figma (centro 163,120 · raggio 110 · spessore 16%) */
+const GZ = [[Math.PI, 4.163790], [4.213790, 5.210988], [5.260988, 2 * Math.PI]], GK = ['ok', 'mid', 'bad'];
+const GC = { x: 163, y: 120, r: 101.2 };
+const gPt = a => [GC.x + GC.r * Math.cos(a), GC.y + GC.r * Math.sin(a)];
+// posizione dell'indicatore dentro la fascia (dimostrativa): media normalizzata degli indici
+function riskScore(r, gass) {
+  const v = [r.dims.filter(Boolean).length / 3, Math.min(r.charlson, 10) / 10]; if (gass) v.push(r.g / 4);
+  return v.reduce((a, b) => a + b, 0) / v.length;
+}
+function gaugeAngle(k, s) { const [a0, a1] = GZ[GK.indexOf(k)]; return a0 + (0.15 + 0.7 * s) * (a1 - a0); }
+function gauge(k, s) {
+  const f = n => n.toFixed(2), a = gaugeAngle(k, s), [ix, iy] = gPt(a);
+  const zones = GZ.map(([a0, a1], i) => { const [x0, y0] = gPt(a0), [x1, y1] = gPt(a1);
+    return `<path class="gz ${GK[i] === k ? 'act' : ''}" d="M${f(x0)} ${f(y0)}A${GC.r} ${GC.r} 0 0 1 ${f(x1)} ${f(y1)}" pathLength="1" style="stroke:var(${LVL[GK[i]].v});--d:${(i * .14).toFixed(2)}s"/>`; }).join('');
+  return `<div class="gauge go lit" data-a="${a}" role="img" aria-label="Rischio geriatrico ${LVL[k].t.toLowerCase()}"><svg viewBox="0 0 326 142" aria-hidden="true">${zones}
+    <circle class="gi" cx="${f(ix)}" cy="${f(iy)}" r="6.5" style="stroke:var(${LVL[k].v})"/></svg>
+    <div class="gv"><b class="${LVL[k].c}">${LVL[k].t}</b><span>Rischio geriatrico</span></div><span class="gl l">Basso</span><span class="gl r">Alto</span></div>`;
+}
+function animGauge(el) {
+  const g = $('.gauge', el); if (!g || RM.matches) return;
+  const dot = $('.gi', g), a1 = +g.dataset.a, a0 = Math.PI;
+  const place = a => { const [x, y] = gPt(a); dot.setAttribute('cx', x.toFixed(2)); dot.setAttribute('cy', y.toFixed(2));
+    const z = GZ.findIndex(([, e]) => a <= e + .025); dot.style.stroke = `var(${LVL[GK[z < 0 ? 2 : z]].v})`; };
+  g.classList.add('nt'); g.classList.remove('go', 'lit'); place(a0); g.getBoundingClientRect(); g.classList.remove('nt');
+  const il = $('.ilist', el); if (il) il.classList.add('anim');
+  requestAnimationFrame(() => requestAnimationFrame(() => g.classList.add('go')));
+  const dur = 1150; let t0 = null;
+  const step = now => {
+    if (!g.isConnected) return; if (t0 === null) t0 = now;
+    const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3);
+    place(a0 + (a1 - a0) * e); if (t > .78) g.classList.add('lit');
+    if (t < 1) requestAnimationFrame(step);
+  };
+  setTimeout(() => requestAnimationFrame(step), 480);
+}
+SCREENS.patient = {
+  render({ code, from }) {
+    const p = P(code), r = p.assessment.results, dead = deceased(p), gass = hasGass(p), k = profile(r, gass).k;
+    const many = p.followups.length > 1;
+    const fuRows = p.followups.map(f => { const lab = many ? `Follow-up · ${f.n}` : 'Follow-up';
+      return f.status === 'deceduto'
+      ? `<div class="tlrow"><span class="dot"></span><span class="tx"><b>${lab}</b><small>Decesso registrato il ${isoToDisp(f.date)}</small></span></div>`
+      : `<button class="tlrow" data-act="cmp" data-n="${f.n}"><span class="dot"></span><span class="tx"><b>${lab}</b><small>Eseguito il ${isoToDisp(f.date)}</small></span>${CHEV_F}</button>`; }).join('');
+    const bar = dead ? `${nota('Paziente deceduto. Non sono previsti ulteriori follow-up.', 'warn')}<div class="btns"><button class="btn off" disabled aria-disabled="true">Follow up</button></div>`
+      : `<div class="btns g10">${btn('PDF', 'pdf', 'secondary')}${fuOpen(p) ? btn(p.fuDraft ? 'Riprendi follow up' : 'Follow up', 'fu')
+        : '<button class="btn off" disabled aria-disabled="true" title="Il follow up sarà disponibile 24 ore dopo la validazione">Follow up</button>'}</div>`;
+    return `${header({ back: { label: from || rootLabel() }, title: fullName(p), sub: metaPat(p), share: true })}
+    <div class="scroll"><div class="body">
+      <div class="between">${badge('ok')}<span class="metaline">Baseline validata il ${fDate(p.assessment.validatedAt)}</span></div>
+      <div class="card pad16 rcard"><div class="gwrap"><h3>Risultati valutazione baseline</h3>${gauge(k, riskScore(r, gass))}</div>
+        <div class="ilist">${gass ? idxRow(`${r.g}/4`, 'GASS-TAVR', `${r.g} fattori su 4 sfavorevoli`, gassLvl(r)) : ''}
+          ${idxRow(`F${r.f}`, 'Fenotipo', `Classe ${r.f} di 5`, fenoLvl(r))}${idxRow(r.charlson, 'Charlson', 'Age-adjusted', chLvl(r))}</div></div>
+      <div class="card pad16"><h3>Percorso del paziente</h3><div class="divider"></div><div class="tl">
+        <button class="tlrow" data-act="res"><span class="dot"></span><span class="tx"><b>Valutazione baseline</b><small>Validata il ${fDate(p.assessment.validatedAt)}</small></span>${CHEV_F}</button>
+        ${fuRows}</div></div>
+    </div></div>
+    <div class="bb">${bar}</div>`;
+  },
+  init(el, prm) { animGauge(el); const p = P(prm.code); if (!deceased(p)) liveUnlock(el, p, prm, SCREENS.patient); },
+  actions: {
+    res: (t, { code }) => go('results', { code, from: 'patient' }),
+    edit: (t, { code }) => go('assessment', { code, review: true }),
+    pdf: (t, { code }) => go('report', { code, from: 'Scheda paziente' }),
+    cmp: (t, { code }) => go('comparison', { code, n: +t.dataset.n, from: 'patient' }),
+    fu(t, { code }) {
+      const p = P(code); if (!fuOpen(p) || deceased(p)) return;
+      p.fuDraft = p.fuDraft ? { ...fuBlank(), ...p.fuDraft } : fuBlank(); save();
+      go('step', { code, g: 'fu', i: 0 });
+    }
+  }
+};
+function confirmFU(p) {
+  const dead = p.fuDraft.status === 'deceduto';
+  const html = dead
+    ? `<div class="circ">${ic('listCheck', 30)}</div><h2>Confermi il decesso del paziente?</h2>
+       <p>Il follow-up verrà chiuso senza rivalutazioni e non saranno previsti ulteriori follow-up per il paziente.</p>
+       <div class="mbtns"><button class="btn primary" data-act="yes">Conferma e chiudi</button><button class="link" data-act="close">Annulla</button></div>`
+    : `<div class="circ">${ic('listCheck', 30)}</div><h2>Sei sicuro di voler confermare il follow up?</h2>
+       <p>Verrà calcolato il confronto con la valutazione baseline e aggiornato il report.</p>
+       <div class="mbtns"><button class="btn primary" data-act="yes">Conferma follow up</button><button class="link" data-act="close">Annulla</button></div>`;
+  overlay('modal', html, {
+    actions: {
+      yes(t, api) {
+        const d = p.fuDraft, n = p.followups.length + 1;
+        const fu = dead ? { n, status: 'deceduto', date: d.date, confirmedAt: new Date().toISOString() }
+          : { n, status: 'vivo', date: d.date, badl: Calc.badl(d.badl), mna: Calc.mna(d.mna), raw: { badl: d.badl, mna: d.mna },
+              labs: d.labsNA ? null : { ...d.labs }, echo: d.echoNA ? null : { ...d.echo }, confirmedAt: new Date().toISOString() };
+        p.followups.push(fu); delete p.fuDraft; save();
+        api.close(() => {
+          if (dead) { resetTo([rootTab(), { name: 'patient', params: { code: p.code, from: rootLabel() } }], 'push'); toast('Follow-up registrato: percorso chiuso'); }
+          else resetTo([rootTab(), { name: 'patient', params: { code: p.code, from: rootLabel() } }, { name: 'comparison', params: { code: p.code, n, from: 'save' } }], 'push');
+        });
+      }
+    }
+  });
+}
+function monthsBetween(a, b) {
+  const m = Math.round((D(b) - D(a)) / (864e5 * 30.44));
+  return m <= 0 ? 'meno di 1 mese' : m === 1 ? '1 mese' : `${m} mesi`;
+}
+function cmpCard(title, base, fu, max) {
+  const d = fu - base;
+  const delta = d > 0 ? `<span class="delta c-ok">${ic('up', 16)}+${d} miglioramento</span>` : d < 0 ? `<span class="delta c-bad">${ic('dn', 16)}−${-d} peggioramento</span>` : `<span class="delta muted">Invariato</span>`;
+  return `<div><div class="between"><h3 style="font-size:16px;line-height:20px;margin:0">${title}</h3>${delta}</div><div class="bars">
+    <div class="bar"><span>Baseline</span><div class="tr"><i data-w="${base / max * 100}"></i></div><b>${base} / ${max}</b></div>
+    <div class="bar fu"><span>Follow-up</span><div class="tr"><i data-w="${fu / max * 100}"></i></div><b>${fu} / ${max}</b></div></div></div>`;
+}
+SCREENS.comparison = {
+  render({ code, n, from }) {
+    const p = P(code), r = p.assessment.results, f = p.followups.find(x => x.n === n);
+    return `${header({ back: { label: 'Scheda paziente' }, title: fullName(p), sub: metaPat(p), share: true })}
+    <div class="scroll"><div class="body ${from === 'save' ? 'stagger' : ''}">
+      <div class="row">${badge('ok')}<span class="metaline">Baseline validata il ${fDate(p.assessment.validatedAt)}</span></div>
+      <div class="card pad16"><h3 style="margin-bottom:8px">Follow-up ${f.n} · visita</h3><div class="kvs">
+        <div class="kv"><span>Data della visita</span><b>${isoToDisp(f.date)}</b></div>
+        <div class="kv"><span>Status vitale</span><b>Vivo</b></div>
+        <div class="kv"><span>Tempo dal baseline</span><b>${monthsBetween(p.assessment.validatedAt, f.date)}</b></div></div></div>
+      <div class="card pad16 cmp">${cmpCard('BADL', r.badl, f.badl, 6)}<div class="sep"></div>${cmpCard('MNA-SF', r.mna, f.mna, 14)}</div>
+    </div></div>
+    <div class="bb"><div class="btns">${btn('Visualizza PDF', 'pdf')}</div></div>`;
+  },
+  init(el) { setTimeout(() => $$('.tr i', el).forEach(i => i.style.width = i.dataset.w + '%'), RM.matches ? 0 : 380); },
+  actions: {
+    pdf: (t, { code }) => go('report', { code }),
+    patient(t, { code, from }) { if (from === 'patient') back(); else replace('patient', { code, from: rootLabel() }, 'push'); }
+  }
+};
+
+/* =========================================================
+   BOOT · cornice, scala, pannello laterale
+   ========================================================= */
+const stage = document.getElementById('stage');
+function fit() {
+  const full = window.innerWidth < 640 || window.innerHeight < 560;
+  stage.classList.toggle('full', full);
+  document.documentElement.classList.toggle('full-mode', full);
+  if (!full) {
+    const sideW = window.innerWidth > 980 ? 364 : 0;
+    stage.querySelector('.side').style.display = sideW ? '' : 'none';
+    const s = Math.min(1, (window.innerHeight - 48) / 878, (window.innerWidth - 48 - sideW) / 424);
+    document.getElementById('dwrap').style.setProperty('--s', Math.max(.5, s).toFixed(3));
+  }
+}
+window.addEventListener('resize', fit);
+fit();
+document.getElementById('sideLogo').innerHTML = LOGO;
+document.getElementById('sideReset').innerHTML = `${ic('reset', 18)}Ripristina dati demo`;
+document.getElementById('sideLogin').innerHTML = `${ic('logout', 18)}Ricomincia dal login`;
+document.getElementById('sideSwitch').innerHTML = `${ic('back', 18)}Cambia dispositivo`;
+document.getElementById('sideReset').addEventListener('click', () => confirmReset());
+document.getElementById('sideLogin').addEventListener('click', () => { $$('.ov,.sheet,.modal', screen).forEach(n => n.remove()); resetTo(['login'], 'fade'); });
+
+S = load(); save();
+resetTo(['login'], 'none');
+</script>
+</body>
+</html>

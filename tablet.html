@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CGAssist · Tablet</title>
+<meta name="description" content="Prototipo CGAssist, versione tablet/desktop con sidebar.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page-bg:#ECEEF2; --page-text:#2B2E35; --page-muted:#6B707C; --page-card:#FFFFFF; --page-line:#D9DCE3;
+  --blue:#375ECC; --blue-d:#2C4FB3; --blue-50:#EEF2FC;
+  --text:#3B3B3B; --muted:#717171; --line:#E2E6F2; --bg:#F6F8FF; --white:#FFFFFF;
+  --green:#0DA30A; --orange:#CA720E; --red:#B50505;
+  --shadow:0 2px 8px rgba(33,51,115,.06);
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page-bg:#15171C; --page-text:#E7E9EE; --page-muted:#9AA0AC; --page-card:#1F2229; --page-line:#2E323B; }
+}
+:root[data-theme="dark"]{ --page-bg:#15171C; --page-text:#E7E9EE; --page-muted:#9AA0AC; --page-card:#1F2229; --page-line:#2E323B; }
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--page-bg);color:var(--page-text);font-family:'Montserrat','Segoe UI',Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input{font:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* ---------- barra prototipo ---------- */
+.bar{height:64px;display:flex;align-items:center;gap:16px;padding:0 24px}
+.bar a.back{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 14px 0 10px;border-radius:19px;border:1.5px solid var(--page-line);
+  background:var(--page-card);color:var(--page-text);text-decoration:none;font-size:13px;font-weight:600}
+.bar a.back:hover{border-color:var(--blue)}
+.bar .t{font-size:13px;font-weight:600;color:var(--page-muted)}
+.bar .sp{flex:1}
+.seg{display:flex;padding:3px;border-radius:21px;background:var(--page-card);border:1.5px solid var(--page-line)}
+.seg button{height:32px;padding:0 14px;border:0;border-radius:16px;background:none;font-size:13px;font-weight:600;color:var(--page-muted);display:inline-flex;align-items:center;gap:6px}
+.seg button.on{background:var(--blue);color:#fff}
+.seg button:not(.on):hover{color:var(--page-text)}
+
+/* ---------- cornice dispositivo ---------- */
+.stage{height:calc(100% - 64px);display:flex;align-items:center;justify-content:center;padding:0 24px 24px}
+.dwrap{position:relative;flex:none}
+.device{position:absolute;left:0;top:0;transform-origin:0 0;padding:14px;border-radius:40px;background:#0B0C0F;
+  box-shadow:0 0 0 1.5px #3A3D45,0 40px 70px -24px rgba(20,24,35,.45),0 10px 24px rgba(20,24,35,.14)}
+.device.desk{padding:0;border-radius:12px;background:#D5D8DF;box-shadow:0 0 0 1px #C2C6CE,0 40px 70px -24px rgba(20,24,35,.4)}
+.device.desk::before{content:"";display:block;height:34px;border-radius:12px 12px 0 0;
+  background:radial-gradient(circle at 18px 17px,#FF5F57 5px,transparent 5.5px),radial-gradient(circle at 36px 17px,#FEBC2E 5px,transparent 5.5px),radial-gradient(circle at 54px 17px,#28C840 5px,transparent 5.5px),#E6E8EC}
+.screen{position:relative;overflow:hidden;border-radius:26px;background:var(--bg);container-type:inline-size;container-name:app}
+.device.desk .screen{border-radius:0 0 12px 12px}
+body.full .bar{display:none}
+body.full .stage{height:100%;padding:0}
+body.full .device{position:static;padding:0;border-radius:0;box-shadow:none;transform:none!important;background:none}
+body.full .device::before{display:none}
+body.full .dwrap{width:100%!important;height:100%!important}
+body.full .screen{width:100%!important;height:100%!important;border-radius:0}
+
+/* ---------- app ---------- */
+.app{display:flex;height:100%;color:var(--text);font-size:14px}
+.sb{width:264px;flex:none;background:#fff;border-right:1px solid var(--line);padding:28px 20px 24px;display:flex;flex-direction:column;gap:32px;overflow:auto}
+.sb .logo{color:var(--blue);padding-left:12px}
+.sb .logo svg{width:140px;height:auto;display:block}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav .lab{font-size:11px;font-weight:500;letter-spacing:.08em;color:var(--muted);padding:0 12px 8px}
+.ni{display:flex;align-items:center;gap:12px;height:44px;padding:0 12px;border-radius:10px;border:0;background:none;color:var(--text);font-weight:500;font-size:14px;text-align:left;width:100%}
+.ni svg{color:var(--muted);flex:none}
+.ni:hover{background:var(--blue-50)}
+.ni.on{background:var(--blue);color:#fff;font-weight:700}
+.ni.on svg{color:#fff}
+.sb .grow{flex:1}
+.user{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;background:var(--blue-50)}
+.av{width:40px;height:40px;border-radius:20px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.user b{display:block;font-size:14px}
+.user small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.main{flex:1;min-width:0;overflow:auto;padding:32px 40px 48px;display:flex;flex-direction:column;gap:28px}
+.top{display:flex;align-items:center;gap:16px}
+.hello{flex:1;min-width:0}
+.hello h1{margin:0;font-size:28px;line-height:34px;font-weight:700}
+.hello p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.search{width:300px;height:44px;display:flex;align-items:center;gap:8px;padding:0 16px;border-radius:10px;background:#fff;border:1px solid var(--line);color:var(--muted)}
+.search input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--text);font-size:14px}
+.search:focus-within{border-color:var(--blue)}
+.btn{height:44px;padding:0 20px;border-radius:22px;border:1.5px solid var(--blue);background:var(--blue);color:#fff;font-weight:500;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;transition:background .15s,transform .1s}
+.btn:hover{background:var(--blue-d);border-color:var(--blue-d)}
+.btn:active{transform:scale(.98)}
+.btn.sec{background:#fff;color:var(--blue)}
+.btn.sec:hover{background:var(--blue-50)}
+.btn.sm{height:37px;padding:0 16px;min-width:114px}
+.link{border:0;background:none;color:var(--blue);font-weight:500;font-size:14px;text-decoration:underline;text-underline-offset:3px;padding:2px 0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.kpi{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:20px;display:flex;flex-direction:column;gap:8px}
+.kpi .l{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:4px;flex:none;background:var(--orange)}
+.dot.ok{background:var(--green)}.dot.b{background:var(--blue)}.dot.r{background:var(--red)}
+.kpi .v{font-size:32px;line-height:38px;font-weight:700}
+.kpi .n{font-size:12px;color:var(--muted)}
+.content{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.col{display:flex;flex-direction:column;gap:24px;min-width:0}
+.panel{background:#fff;border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.ph{display:flex;align-items:center;gap:12px;padding:20px 20px 16px}
+.ph h2{flex:1;margin:0;font-size:18px;font-weight:700}
+.ph .c{font-size:13px;color:var(--muted)}
+.tr{display:grid;grid-template-columns:minmax(0,1fr) 170px 110px 100px 20px 118px;gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line)}
+.tr:last-child{border-bottom:0}
+.tr.th{background:var(--bg);padding-top:10px;padding-bottom:10px;border-bottom:0;font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.04em}
+.tr .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr .nm small{display:none;font-weight:400;font-size:12px;color:var(--muted);margin-top:2px}
+.tr .pt,.tr .dt{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr.th .pt{font-size:11px;color:inherit}
+.tr .st{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500}
+.share{border:0;background:none;color:var(--blue);padding:0;display:grid;place-items:center;width:20px;height:20px}
+.tr .btn{width:100%;min-width:0}
+.empty{padding:28px 20px;text-align:center;color:var(--muted);font-size:14px}
+.hero{background:var(--blue);color:#fff;border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.plus{width:48px;height:48px;border-radius:24px;background:#fff;color:var(--blue);display:grid;place-items:center;border:0}
+.hero h3{margin:0;font-size:20px;line-height:25px;font-weight:700}
+.hero p{margin:0;font-size:14px;line-height:1.45;opacity:.9}
+.hero .btn{width:100%;background:#fff;color:var(--blue);border-color:#fff}
+.hero .btn:hover{background:var(--blue-50)}
+.guide{background:#fff;border-radius:16px;box-shadow:var(--shadow);padding:24px;display:flex;flex-direction:column;gap:16px}
+.guide h3{margin:0;font-size:16px;font-weight:700}
+.step{display:flex;gap:12px}
+.step .num{width:28px;height:28px;border-radius:14px;background:var(--blue-50);color:var(--blue);font-weight:700;font-size:13px;display:grid;place-items:center;flex:none}
+.step b{display:block;font-size:14px}
+.step small{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+.filters{display:flex;gap:8px;padding:0 20px 16px;flex-wrap:wrap}
+.chip{height:34px;padding:0 14px;border-radius:17px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:500;color:var(--text)}
+.chip.on{border-color:var(--blue);background:var(--blue-50);color:var(--blue)}
+.tr .cd{font-size:12px;color:var(--muted);font-weight:400}
+.view{display:flex;flex-direction:column;gap:28px;animation:fade .35s var(--ease)}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ---------- responsive (larghezza dello schermo simulato) ---------- */
+@container app (max-width:1300px){
+  .sb{width:232px;padding:24px 16px}
+  .main{padding:28px 28px 40px}
+  .content{grid-template-columns:minmax(0,1fr)}
+  .side-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
+  .tr{grid-template-columns:minmax(0,1fr) 160px 104px 96px 20px 118px}
+}
+@container app (max-width:1100px){
+  .sb{width:84px;padding:24px 14px;align-items:center}
+  .sb .logo{padding:0;width:44px;overflow:hidden}
+  .sb .logo svg{width:140px}
+  .nav .lab,.ni span,.user .who{display:none}
+  .ni{width:56px;justify-content:center;padding:0}
+  .user{padding:8px;background:none}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .search{width:220px}
+}
+@container app (max-width:900px){
+  .main{padding:24px 24px 36px;gap:24px}
+  .top{flex-wrap:wrap}
+  .hello{flex-basis:100%}
+  .search{flex:1;width:auto}
+  .tr{grid-template-columns:minmax(0,1fr) 100px 92px 20px 112px}
+  .tr .pt{display:none}
+  .tr .nm small{display:block}
+  .side-col{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- modale ---------- */
+.ov{position:absolute;inset:0;background:rgba(20,24,40,.45);display:grid;place-items:center;padding:24px;z-index:5;animation:fade .2s}
+.modal{width:min(440px,100%);background:#fff;border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:12px;color:var(--text);box-shadow:0 30px 60px -20px rgba(20,24,40,.45)}
+.modal h3{margin:0;font-size:20px;font-weight:700}
+.modal p{margin:0;color:var(--muted);line-height:1.5}
+.modal .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="bar">
+  <a class="back" href="./"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>Cambia dispositivo</a>
+  <span class="t">Tablet · layout con sidebar</span>
+  <span class="sp"></span>
+  <div class="seg" role="group" aria-label="Formato schermo">
+    <button data-mode="land" class="on">Tablet orizzontale</button>
+    <button data-mode="port">Tablet verticale</button>
+    <button data-mode="desk">Desktop 1440</button>
+  </div>
+</div>
+<div class="stage">
+  <div class="dwrap" id="dwrap">
+    <div class="device" id="device"><div class="screen" id="screen"><div class="app" id="app"></div></div></div>
+  </div>
+</div>
+<script>
+'use strict';
+const LOGO = `<svg viewBox="0 0 214 38" fill="currentColor" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CGAssist"><path d="M17.6 37.7C15.2 37.7 13 37.3 11 36.5C9 35.6 7.3 34.4 5.8 32.9C4.3 31.4 3.2 29.5 2.4 27.4C1.6 25.3 1.2 23 1.2 20.5C1.2 18 1.6 15.9 2.4 13.8C3.3 11.7 4.5 9.9 6 8.4C7.6 6.8 9.3 5.6 11.4 4.8C13.4 3.9 15.6 3.5 18 3.5C19.6 3.5 21.2 3.7 22.8 4.2C24.3 4.7 25.7 5.3 27 6.2C28.2 7 29.3 8 30.2 9.1L26.2 13.4C25.4 12.6 24.5 11.8 23.6 11.3C22.8 10.7 21.8 10.2 20.9 9.9C20 9.6 19 9.5 18 9.5C16.6 9.5 15.2 9.7 13.9 10.3C12.6 10.8 11.5 11.6 10.5 12.6C9.6 13.5 8.9 14.7 8.3 16.1C7.8 17.4 7.5 18.9 7.5 20.6C7.5 22.2 7.8 23.8 8.3 25.1C8.8 26.5 9.6 27.7 10.5 28.7C11.5 29.6 12.7 30.4 14 30.9C15.4 31.4 16.9 31.7 18.5 31.7C19.6 31.7 20.6 31.6 21.6 31.3C22.5 31 23.5 30.6 24.3 30.1C25.1 29.5 25.9 28.9 26.6 28.2L29.7 33.1C28.9 34 27.9 34.8 26.6 35.5C25.3 36.1 23.9 36.7 22.3 37.1C20.8 37.5 19.2 37.7 17.6 37.7H17.6Z"/><path d="M51.3 37.7C48.8 37.7 46.5 37.3 44.4 36.4C42.2 35.5 40.4 34.3 38.8 32.7C37.2 31.2 36 29.4 35.1 27.3C34.3 25.2 33.8 23 33.8 20.5C33.8 18.1 34.3 15.9 35.2 13.8C36 11.7 37.3 9.9 38.9 8.4C40.4 6.8 42.3 5.6 44.5 4.8C46.6 3.9 48.9 3.5 51.4 3.5C53.2 3.5 54.9 3.7 56.5 4.2C58.1 4.7 59.6 5.3 60.9 6.2C62.2 7 63.3 8 64.1 9.1L60.2 13.2C59.3 12.3 58.4 11.6 57.5 11C56.5 10.5 55.5 10 54.5 9.7C53.5 9.4 52.5 9.2 51.4 9.2C49.8 9.2 48.3 9.5 47 10.1C45.6 10.7 44.4 11.5 43.4 12.5C42.4 13.5 41.6 14.7 41 16C40.5 17.4 40.2 18.9 40.2 20.5C40.2 22.1 40.5 23.5 41.1 24.9C41.7 26.3 42.5 27.6 43.5 28.6C44.6 29.7 45.8 30.5 47.2 31.1C48.6 31.6 50 31.9 51.6 31.9C52.8 31.9 53.9 31.8 54.9 31.4C55.9 31.1 56.8 30.6 57.6 30C58.4 29.3 59 28.6 59.5 27.8C59.9 27 60.1 26.1 60.1 25.1V24.1L61 25.1H51.1V19.6H66.2C66.3 19.9 66.3 20.3 66.4 20.7C66.4 21.2 66.4 21.6 66.4 22C66.5 22.4 66.5 22.7 66.5 23C66.5 25.2 66.1 27.2 65.3 29C64.6 30.8 63.5 32.3 62.1 33.6C60.7 34.9 59.1 35.9 57.3 36.6C55.4 37.3 53.5 37.7 51.3 37.7L51.3 37.7Z"/><path d="M123.6 37.7C121.4 37.7 119.4 37.3 117.6 36.6C115.9 35.8 114.4 34.8 113.3 33.4L117.1 30.1C118.1 31.2 119.2 31.9 120.3 32.4C121.5 32.9 122.8 33.1 124.1 33.1C124.6 33.1 125.1 33.1 125.5 32.9C126 32.8 126.3 32.6 126.6 32.4C127 32.1 127.2 31.8 127.4 31.5C127.6 31.1 127.7 30.8 127.7 30.4C127.7 29.6 127.4 29 126.8 28.6C126.5 28.3 126 28.1 125.3 27.8C124.6 27.6 123.7 27.3 122.6 27.1C120.9 26.6 119.5 26.1 118.3 25.5C117.2 24.9 116.3 24.3 115.7 23.6C115.1 23 114.7 22.3 114.4 21.5C114.2 20.7 114 19.9 114 19C114 17.9 114.3 16.9 114.8 16C115.3 15.1 115.9 14.3 116.8 13.7C117.7 13 118.7 12.5 119.8 12.1C121 11.8 122.2 11.6 123.4 11.6C124.6 11.6 125.9 11.8 127.1 12.1C128.3 12.4 129.4 12.9 130.4 13.4C131.5 14 132.4 14.7 133.1 15.6L129.8 19.1C129.2 18.6 128.6 18.1 127.9 17.6C127.1 17.2 126.4 16.8 125.7 16.5C125 16.3 124.3 16.1 123.6 16.1C123 16.1 122.5 16.2 122 16.3C121.5 16.4 121.1 16.6 120.8 16.8C120.5 17 120.3 17.3 120.1 17.6C119.9 18 119.8 18.4 119.8 18.8C119.8 19.2 119.9 19.5 120.1 19.9C120.3 20.2 120.5 20.5 120.9 20.7C121.2 20.9 121.7 21.2 122.4 21.5C123.1 21.7 124 22 125.2 22.3C126.7 22.7 128 23.1 129.1 23.6C130.1 24.2 131 24.7 131.6 25.4C132.2 26 132.6 26.6 132.9 27.4C133.1 28.2 133.2 29 133.2 29.9C133.2 31.4 132.8 32.8 132 33.9C131.1 35.1 130 36 128.5 36.7C127.1 37.4 125.5 37.7 123.6 37.7V37.7Z"/><path d="M146.8 37.7C144.6 37.7 142.6 37.3 140.8 36.6C139 35.8 137.6 34.8 136.5 33.4L140.3 30.1C141.3 31.2 142.3 31.9 143.5 32.4C144.7 32.9 145.9 33.1 147.2 33.1C147.8 33.1 148.3 33.1 148.7 32.9C149.1 32.8 149.5 32.6 149.8 32.4C150.1 32.1 150.4 31.8 150.6 31.5C150.7 31.1 150.8 30.8 150.8 30.4C150.8 29.6 150.5 29 150 28.6C149.6 28.3 149.1 28.1 148.5 27.8C147.8 27.6 146.9 27.3 145.8 27.1C144.1 26.6 142.6 26.1 141.5 25.5C140.4 24.9 139.5 24.3 138.8 23.6C138.3 23 137.9 22.3 137.6 21.5C137.3 20.7 137.2 19.9 137.2 19C137.2 17.9 137.5 16.9 137.9 16C138.4 15.1 139.1 14.3 140 13.7C140.8 13 141.8 12.5 143 12.1C144.1 11.8 145.3 11.6 146.6 11.6C147.8 11.6 149.1 11.8 150.3 12.1C151.5 12.4 152.6 12.9 153.6 13.4C154.7 14 155.5 14.7 156.3 15.6L153 19.1C152.4 18.6 151.8 18.1 151 17.6C150.3 17.2 149.6 16.8 148.9 16.5C148.1 16.3 147.4 16.1 146.8 16.1C146.2 16.1 145.7 16.2 145.2 16.3C144.7 16.4 144.3 16.6 144 16.8C143.7 17 143.4 17.3 143.2 17.6C143.1 18 143 18.4 143 18.8C143 19.2 143.1 19.5 143.3 19.9C143.5 20.2 143.7 20.5 144 20.7C144.4 20.9 144.9 21.2 145.6 21.5C146.3 21.7 147.2 22 148.3 22.3C149.9 22.7 151.2 23.1 152.3 23.6C153.3 24.2 154.1 24.7 154.7 25.4C155.3 26 155.8 26.6 156 27.4C156.3 28.2 156.4 29 156.4 29.9C156.4 31.4 156 32.8 155.1 33.9C154.3 35.1 153.2 36 151.7 36.7C150.3 37.4 148.6 37.7 146.8 37.7V37.7Z"/><path d="M165.1 6.8C163.9 6.8 163 6.5 162.4 5.9C161.7 5.3 161.4 4.5 161.4 3.4C161.4 2.4 161.7 1.6 162.4 1C163.1 0.3 164 0 165.1 0C166.3 0 167.3 0.3 167.9 0.9C168.6 1.5 168.9 2.3 168.9 3.4C168.9 4.4 168.5 5.2 167.9 5.9C167.2 6.5 166.3 6.8 165.1 6.8V6.8ZM162.2 37.2V12.1H168.1V37.2H162.2Z"/><path d="M184 37.7C181.8 37.7 179.8 37.3 178 36.6C176.2 35.8 174.8 34.8 173.7 33.4L177.5 30.1C178.4 31.2 179.5 31.9 180.7 32.4C181.9 32.9 183.1 33.1 184.4 33.1C185 33.1 185.4 33.1 185.9 32.9C186.3 32.8 186.7 32.6 187 32.4C187.3 32.1 187.6 31.8 187.7 31.5C187.9 31.1 188 30.8 188 30.4C188 29.6 187.7 29 187.1 28.6C186.8 28.3 186.3 28.1 185.6 27.8C184.9 27.6 184.1 27.3 183 27.1C181.3 26.6 179.8 26.1 178.7 25.5C177.5 24.9 176.6 24.3 176 23.6C175.5 23 175.1 22.3 174.8 21.5C174.5 20.7 174.4 19.9 174.4 19C174.4 17.9 174.6 16.9 175.1 16C175.6 15.1 176.3 14.3 177.1 13.7C178 13 179 12.5 180.2 12.1C181.3 11.8 182.5 11.6 183.7 11.6C185 11.6 186.2 11.8 187.4 12.1C188.6 12.4 189.8 12.9 190.8 13.4C191.8 14 192.7 14.7 193.4 15.6L190.2 19.1C189.6 18.6 188.9 18.1 188.2 17.6C187.5 17.2 186.8 16.8 186 16.5C185.3 16.3 184.6 16.1 184 16.1C183.3 16.1 182.8 16.2 182.4 16.3C181.9 16.4 181.5 16.6 181.2 16.8C180.8 17 180.6 17.3 180.4 17.6C180.2 18 180.2 18.4 180.2 18.8C180.2 19.2 180.3 19.5 180.5 19.9C180.6 20.2 180.9 20.5 181.2 20.7C181.6 20.9 182.1 21.2 182.8 21.5C183.5 21.7 184.4 22 185.5 22.3C187.1 22.7 188.4 23.1 189.4 23.6C190.5 24.2 191.3 24.7 191.9 25.4C192.5 26 192.9 26.6 193.2 27.4C193.5 28.2 193.6 29 193.6 29.9C193.6 31.4 193.2 32.8 192.3 33.9C191.5 35.1 190.3 36 188.9 36.7C187.4 37.4 185.8 37.7 184 37.7V37.7Z"/><path d="M196.5 17.6V12.1H212.8V17.6H196.5ZM201.5 37.2V5.8H207.3V37.2H201.5Z"/><path d="M69.4 37.8H75.8L91.5 8.9L88.4 3.1L69.4 37.8Z"/><path d="M101.5 26.8C100.2 28.1 98.7 29.3 97 30.2C94.5 31.5 91.7 32.2 88.7 32.2C84.4 32.2 80.4 30.7 77.3 28.2L79.3 23.2C81.6 25.7 85 27.3 88.7 27.3C91.7 27.3 94.5 26.2 96.7 24.5C97.5 23.8 98.3 23 99 22.1"/><path d="M101.4 26.6L88.5 3.1L85.5 8.9L96.9 30C98.6 29.1 100.1 28 101.4 26.6H101.4Z"/><path d="M99.6 34.8L101.2 37.8H107.5L104.2 31.6C102.8 32.9 101.3 33.9 99.6 34.8Z"/></svg>`;
+const IC = {
+  home:'<path d="M4.5 10.2L12 4l7.5 6.2V19.5a.5.5 0 01-.5.5h-4.5v-5.5h-5V20H5a.5.5 0 01-.5-.5z"/>',
+  patients:'<rect x="5" y="4" width="14" height="16.5" rx="2"/><path d="M9.5 4V2.8h5V4"/><circle cx="12" cy="10.6" r="2.3"/><path d="M8.3 17c.7-1.9 2.1-2.8 3.7-2.8s3 .9 3.7 2.8"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',
+  user:'<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="10" r="3"/><path d="M6.6 18.2c1.3-1.9 3.2-2.9 5.4-2.9s4.1 1 5.4 2.9"/>',
+  logout:'<path d="M10 4.5H5.5v15H10"/><path d="M14.5 8l4 4-4 4M18.5 12H9.5"/>',
+  search:'<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
+  share:'<circle cx="17.5" cy="5.5" r="2.5"/><circle cx="6.5" cy="12" r="2.5"/><circle cx="17.5" cy="18.5" r="2.5"/><path d="M8.7 10.7l6.6-3.9M8.7 13.3l6.6 3.9"/>'
+};
+const ic = (n, s = 24) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+const DOC = { name:'Dr. Mario Rossi', ini:'MR', centro:'Centro Firenze' };
+
+/* ---------- dati: condivisi con il prototipo mobile (stesso browser) ---------- */
+const LS_KEY = 'cgassist-demo-v3';
+function demo() {
+  const y = new Date(Date.now() - 864e5); y.setHours(16, 5, 0, 0);
+  const d = (code, nome, cognome, pat, status, updatedAt, validatedAt, fu) => ({ code, nome, cognome, patologia:pat, assessment:{ status, updatedAt, validatedAt }, followups: fu ? [{}] : [] });
+  return [
+    d('FIR-024-2026','Giulia','Moretti','Stenosi Aortica','draft', y.toISOString()),
+    d('FIR-023-2026','Alessandro','Conti','Scompenso Cardiaco','draft','2026-08-24T12:40:00'),
+    d('FIR-022-2026','Giorgio','Marchetti','Amiloidosi Cardiaca','draft','2026-08-12T10:05:00'),
+    d('FIR-020-2026','Martina','Ricci','Scompenso Cardiaco','validated','2026-08-22T12:05:00','2026-08-22T12:05:00',1),
+    d('FIR-019-2026','Matteo','Galli','Amiloidosi Cardiaca','validated','2026-08-22T11:40:00','2026-08-22T11:40:00',1),
+    d('FIR-018-2026','Sofia','Lombardi','Stenosi Aortica','validated','2026-08-22T10:12:00','2026-08-22T10:12:00'),
+    d('FIR-017-2026','Lorenzo','Ferri','Stenosi Aortica','validated','2026-07-10T15:20:00','2026-07-10T15:20:00',1),
+    d('FIR-016-2026','Elena','Rinaldi','Amiloidosi Cardiaca','validated','2026-06-25T09:45:00','2026-06-25T09:45:00')
+  ];
+}
+function loadPatients() {
+  try { const o = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (o && o.v === 1 && Array.isArray(o.patients) && o.patients.length) return o.patients; } catch (e) {}
+  return demo();
+}
+const PATS = loadPatients();
+const isDraft = p => p.assessment.status !== 'validated';
+const fullName = p => `${p.nome} ${p.cognome}`;
+const pad2 = n => String(n).padStart(2, '0');
+function when(iso, rel) {
+  if (!iso) return '—';
+  const d = new Date(iso), now = new Date();
+  const day = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day(now) - day(d)) / 864e5);
+  const hm = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  if (rel && diff === 0) return `Oggi ${hm}`;
+  if (rel && diff === 1) return `Ieri ${hm}`;
+  return `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}`;
+}
+const byDate = k => (a, b) => new Date(b.assessment[k] || 0) - new Date(a.assessment[k] || 0);
+const drafts = PATS.filter(isDraft).sort(byDate('updatedAt'));
+const done = PATS.filter(p => !isDraft(p)).sort(byDate('validatedAt'));
+
+/* ---------- viste ---------- */
+const st = { view:'home', q:'', filter:'all' };
+function row(p) {
+  const dr = isDraft(p);
+  return `<div class="tr" role="row">
+    <div class="nm" role="cell">${esc(fullName(p))}<small>${esc(p.patologia)}</small></div>
+    <div class="pt" role="cell">${esc(p.patologia)}</div>
+    <div class="st" role="cell"><span class="dot ${dr ? '' : 'ok'}"></span>${dr ? 'In corso' : 'Validata'}</div>
+    <div class="dt" role="cell">${dr ? when(p.assessment.updatedAt, true) : when(p.assessment.validatedAt)}</div>
+    <button class="share" data-act="share" data-code="${esc(p.code)}" aria-label="Condividi ${esc(fullName(p))}">${ic('share', 20)}</button>
+    <button class="btn sm ${dr ? '' : 'sec'}" data-act="open" data-code="${esc(p.code)}">${dr ? 'Continua' : 'Visualizza'}</button>
+  </div>`;
+}
+const head = (dateLab) => `<div class="tr th" role="row"><span>PAZIENTE</span><span class="pt">PATOLOGIA</span><span>STATO</span><span>${dateLab}</span><span></span><span>AZIONI</span></div>`;
+function panel(title, list, dateLab, all) {
+  const rows = list.length ? list.map(row).join('') : '<div class="empty">Nessun paziente trovato.</div>';
+  return `<section class="panel" role="table" aria-label="${title}">
+    <div class="ph"><h2>${title}</h2><span class="c">${list.length} ${list.length === 1 ? 'paziente' : 'pazienti'}</span>${all ? '<button class="link" data-act="all">Tutte</button>' : ''}</div>
+    ${head(dateLab)}${rows}</section>`;
+}
+const match = p => !st.q || `${fullName(p)} ${p.patologia} ${p.code}`.toLowerCase().includes(st.q.toLowerCase());
+function greet() { const h = new Date().getHours(); return h < 13 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera'; }
+function topbar(title, sub) {
+  return `<div class="top">
+    <div class="hello"><h1>${title}</h1><p>${sub}</p></div>
+    <label class="search">${ic('search', 20)}<input id="q" type="search" placeholder="Cerca paziente…" value="${esc(st.q)}" aria-label="Cerca paziente"></label>
+    <button class="btn" data-act="new">${ic('plus', 20)}Censisci nuovo paziente</button>
+  </div>`;
+}
+function home() {
+  const today = new Date().toLocaleDateString('it-IT', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  const weekAgo = Date.now() - 7 * 864e5;
+  const recent = drafts.filter(p => new Date(p.assessment.updatedAt) > weekAgo).length;
+  const fu = PATS.filter(p => (p.followups || []).length).length;
+  const last = done[0];
+  const kpi = (l, v, n, dot) => `<div class="kpi"><span class="l"><span class="dot ${dot}"></span>${l}</span><span class="v">${v}</span><span class="n">${n}</span></div>`;
+  return `<div class="view">
+    ${topbar(`${greet()}, ${DOC.name}`, `${DOC.centro} · ${today}`)}
+    <div class="kpis">
+      ${kpi('Valutazioni in corso', drafts.length, recent ? `${recent} ${recent === 1 ? 'aggiornata' : 'aggiornate'} negli ultimi 7 giorni` : 'Nessun aggiornamento recente', '')}
+      ${kpi('Valutazioni validate', done.length, last ? `Ultima il ${when(last.assessment.validatedAt)}` : 'Nessuna validazione', 'ok')}
+      ${kpi('Pazienti censiti', PATS.length, DOC.centro, 'b')}
+      ${kpi('Follow-up registrati', fu, 'Pazienti con almeno un follow-up', 'b')}
+    </div>
+    <div class="content">
+      <div class="col">
+        ${panel('Valutazioni in corso', drafts.filter(match).slice(0, 5), 'AGGIORNATA', true)}
+        ${panel('Valutazioni concluse', done.filter(match).slice(0, 5), 'VALIDATA IL', true)}
+      </div>
+      <div class="col side-col">
+        <div class="hero">
+          <button class="plus" data-act="new" aria-label="Censisci un nuovo paziente">${ic('plus')}</button>
+          <h3>Censisci un nuovo paziente</h3>
+          <p>Registra un nuovo paziente anonimo per iniziare la valutazione geriatrica.</p>
+          <button class="btn" data-act="new">Inizia ora</button>
+        </div>
+        <div class="guide">
+          <h3>Come funziona</h3>
+          <div class="step"><span class="num">1</span><div><b>Censisci il paziente</b><small>Codice anonimo e patologia di riferimento</small></div></div>
+          <div class="step"><span class="num">2</span><div><b>Compila la valutazione</b><small>BADL, MNA-SF, SPPB e diario clinico</small></div></div>
+          <div class="step"><span class="num">3</span><div><b>Valida e monitora</b><small>Risultati, condivisione e follow-up</small></div></div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function patients() {
+  const list = PATS.filter(match).filter(p => st.filter === 'all' || (st.filter === 'draft') === isDraft(p))
+    .sort((a, b) => new Date(b.assessment.updatedAt) - new Date(a.assessment.updatedAt));
+  const chip = (k, l, n) => `<button class="chip ${st.filter === k ? 'on' : ''}" data-act="filter" data-f="${k}" aria-pressed="${st.filter === k}">${l} · ${n}</button>`;
+  return `<div class="view">
+    ${topbar('Pazienti', `${PATS.length} pazienti censiti · ${DOC.centro}`)}
+    <section class="panel" role="table" aria-label="Elenco pazienti">
+      <div class="ph"><h2>Elenco pazienti</h2><span class="c">${list.length} risultati</span></div>
+      <div class="filters">${chip('all', 'Tutti', PATS.length)}${chip('draft', 'In corso', drafts.length)}${chip('done', 'Validate', done.length)}</div>
+      ${head('ULTIMA MODIFICA')}${list.length ? list.map(row).join('') : '<div class="empty">Nessun paziente trovato.</div>'}
+    </section>
+  </div>`;
+}
+function render(keepFocus) {
+  const app = document.getElementById('app');
+  const navBtn = (v, icon, label) => `<button class="ni ${st.view === v ? 'on' : ''}" data-act="nav" data-v="${v}" title="${label}" ${st.view === v ? 'aria-current="page"' : ''}>${ic(icon)}<span>${label}</span></button>`;
+  app.innerHTML = `<aside class="sb">
+      <div class="logo">${LOGO}</div>
+      <nav class="nav" aria-label="Menu principale"><span class="lab">MENU</span>
+        ${navBtn('home', 'home', 'Home')}${navBtn('patients', 'patients', 'Pazienti')}
+        <button class="ni" data-act="new" title="Nuova valutazione">${ic('plus')}<span>Nuova valutazione</span></button>
+        <button class="ni" data-act="account" title="Account">${ic('user')}<span>Account</span></button>
+      </nav>
+      <div class="grow"></div>
+      <div class="user"><span class="av">${DOC.ini}</span><span class="who"><b>${DOC.name}</b><small>${DOC.centro}</small></span></div>
+      <a class="ni" href="./" title="Esci" style="text-decoration:none">${ic('logout')}<span>Esci</span></a>
+    </aside>
+    <main class="main" id="main">${st.view === 'home' ? home() : patients()}</main>`;
+  if (keepFocus) { const q = document.getElementById('q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+}
+function modal(title, text, primary) {
+  const ov = document.createElement('div'); ov.className = 'ov';
+  ov.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><h3>${esc(title)}</h3><p>${text}</p>
+    <div class="acts"><button class="btn sec" data-x>Chiudi</button>${primary ? `<a class="btn" href="mobile.html" style="text-decoration:none">Apri prototipo mobile</a>` : ''}</div></div>`;
+  ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('[data-x]')) ov.remove(); });
+  document.getElementById('screen').appendChild(ov);
+  ov.querySelector('[data-x]').focus();
+}
+document.getElementById('app').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const a = b.dataset.act;
+  const p = PATS.find(x => x.code === b.dataset.code);
+  if (a === 'nav') { st.view = b.dataset.v; render(); }
+  else if (a === 'all') { st.view = 'patients'; render(); }
+  else if (a === 'filter') { st.filter = b.dataset.f; render(); }
+  else if (a === 'new') modal('Censisci un nuovo paziente', 'Il censimento e la compilazione della valutazione sono già navigabili nel prototipo mobile. In questa versione tablet è disegnata la home.', true);
+  else if (a === 'open' && p) modal(fullName(p), `${esc(p.code)} · ${esc(p.patologia)}.<br>La scheda ${isDraft(p) ? 'di valutazione in corso' : 'con i risultati validati'} è navigabile nel prototipo mobile.`, true);
+  else if (a === 'share' && p) modal('Condividi valutazione', `La condivisione della valutazione di ${esc(fullName(p))} è disponibile nel prototipo mobile.`, true);
+  else if (a === 'account') modal('Account', `${DOC.name} · Medico operatore · ${DOC.centro}`, false);
+});
+document.getElementById('app').addEventListener('input', e => { if (e.target.id === 'q') { st.q = e.target.value; render(true); } });
+
+/* ---------- formato schermo + adattamento ---------- */
+const MODES = { land:{ w:1194, h:834 }, port:{ w:834, h:1194 }, desk:{ w:1440, h:900 } };
+let mode = 'land';
+try { mode = localStorage.getItem('cgassist-tablet-mode') || 'land'; } catch (e) {}
+if (!MODES[mode]) mode = 'land';
+const full = new URLSearchParams(location.search).has('full') || (matchMedia('(pointer:coarse)').matches && innerWidth >= 744 && innerWidth <= 1400);
+if (full) document.body.classList.add('full');
+function fit() {
+  if (full) return;
+  const m = MODES[mode], dev = document.getElementById('device'), scr = document.getElementById('screen');
+  dev.classList.toggle('desk', mode === 'desk');
+  scr.style.width = m.w + 'px'; scr.style.height = m.h + 'px';
+  const fw = mode === 'desk' ? m.w : m.w + 28, fh = mode === 'desk' ? m.h + 34 : m.h + 28;
+  const s = Math.min(1, (innerWidth - 48) / fw, (innerHeight - 64 - 24) / fh);
+  dev.style.transform = `scale(${s})`;
+  const w = document.getElementById('dwrap'); w.style.width = fw * s + 'px'; w.style.height = fh * s + 'px';
+  document.querySelectorAll('.seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+}
+document.querySelector('.seg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  mode = b.dataset.mode; try { localStorage.setItem('cgassist-tablet-mode', mode); } catch (e) {}
+  fit();
+});
+addEventListener('resize', fit);
+render(); fit();
+</script>
+</body>
+</html>
