@@ -96,7 +96,9 @@ body.full .screen{width:100%!important;height:100%!important;border-radius:0}
 .dot.ok{background:var(--green)}.dot.b{background:var(--blue)}.dot.r{background:var(--red)}
 .kpi .v{font-size:32px;line-height:38px;font-weight:700}
 .kpi .n{font-size:12px;color:var(--muted)}
-.content{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.content{display:flex;flex-direction:column;gap:24px}
+.side-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:stretch}
+.hero .btn{margin-top:auto}
 .col{display:flex;flex-direction:column;gap:24px;min-width:0}
 .panel{background:#fff;border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
 .ph{display:flex;align-items:center;gap:12px;padding:20px 20px 16px}
@@ -136,8 +138,6 @@ body.full .screen{width:100%!important;height:100%!important;border-radius:0}
 @container app (max-width:1300px){
   .sb{width:232px;padding:24px 16px}
   .main{padding:28px 28px 40px}
-  .content{grid-template-columns:minmax(0,1fr)}
-  .side-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}
   .tr{grid-template-columns:minmax(0,1fr) 160px 104px 96px 20px 118px}
 }
 @container app (max-width:1100px){
@@ -285,11 +285,7 @@ function home() {
       ${kpi('Follow-up registrati', fu, 'Pazienti con almeno un follow-up', 'b')}
     </div>
     <div class="content">
-      <div class="col">
-        ${panel('Valutazioni in corso', drafts.filter(match).slice(0, 5), 'AGGIORNATA', true)}
-        ${panel('Valutazioni concluse', done.filter(match).slice(0, 5), 'VALIDATA IL', true)}
-      </div>
-      <div class="col side-col">
+      <div class="side-col">
         <div class="hero">
           <button class="plus" data-act="new" aria-label="Censisci un nuovo paziente">${ic('plus')}</button>
           <h3>Censisci un nuovo paziente</h3>
@@ -302,6 +298,10 @@ function home() {
           <div class="step"><span class="num">2</span><div><b>Compila la valutazione</b><small>BADL, MNA-SF, SPPB e diario clinico</small></div></div>
           <div class="step"><span class="num">3</span><div><b>Valida e monitora</b><small>Risultati, condivisione e follow-up</small></div></div>
         </div>
+      </div>
+      <div class="col">
+        ${panel('Valutazioni in corso', drafts.filter(match).slice(0, 5), 'AGGIORNATA', true)}
+        ${panel('Valutazioni concluse', done.filter(match).slice(0, 5), 'VALIDATA IL', true)}
       </div>
     </div>
   </div>`;
