@@ -745,7 +745,15 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
 .dsearch input::placeholder{color:var(--ph)}
 .dsearch:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,94,204,.14)}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
-.kpi{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(33,51,115,.06);padding:20px;display:flex;flex-direction:column;gap:8px}
+.kpi{position:relative;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(33,51,115,.06);padding:20px;display:flex;flex-direction:column;gap:8px;
+  border:1.5px solid transparent;text-align:left;width:100%;color:var(--text);transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
+.kpi .go{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:16px;display:grid;place-items:center;color:var(--blue);background:var(--blue-50);transition:background-color .2s,color .2s,transform .2s var(--ease)}
+.kpi:hover{border-color:var(--blue);box-shadow:0 10px 24px -12px rgba(55,94,204,.45);transform:translateY(-2px)}
+.kpi:hover .go{background:var(--blue);color:#fff;transform:translateX(2px)}
+.kpi:active{transform:translateY(0) scale(.99)}
+.kpi .l{padding-right:36px}
+.fpill{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 8px 0 14px;border-radius:18px;border:1.5px solid var(--blue);background:var(--blue-50);color:var(--blue);font-size:13px;font-weight:600}
+.fpill:hover{background:#fff}
 .kpi .l{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--muted)}
 .kpi .v{font-size:32px;line-height:38px;font-weight:700}
 .kpi .n{font-size:12px;color:var(--muted)}
@@ -2411,7 +2419,7 @@ SCREENS.home.render = function () {
   const week = drafts.filter(p => Date.now() - D(p.assessment.updatedAt) < 7 * 864e5).length;
   const fu = S.patients.filter(p => p.followups.length).length;
   const fuReadyN = valid.filter(p => !deceased(p) && fuOpen(p) && !p.followups.length).length;
-  const kpi = (l, v, n, dot) => `<div class="kpi"><span class="l"><span class="sdot ${dot}"></span>${l}</span><span class="v">${v}</span><span class="n">${n}</span></div>`;
+  const kpi = (l, v, n, dot, go, aria) => `<button class="kpi" data-act="kpi" data-go="${go}" aria-label="${l}: ${v}. ${aria}"><span class="go" aria-hidden="true">${ic('chev', 18)}</span><span class="l"><span class="sdot ${dot}"></span>${l}</span><span class="v">${v}</span><span class="n">${n}</span></button>`;
   return `<div class="scroll"><div class="dpage">
     <div class="dtop">
       <div class="dhello"><h1>${greet()}, ${DOC.name}</h1><p>${DOC.centro} · ${today}</p></div>
@@ -2419,10 +2427,10 @@ SCREENS.home.render = function () {
       <button class="btn primary" data-act="new">${ic('plus', 20)}Censisci nuovo paziente</button>
     </div>
     <div class="kpis">
-      ${kpi('Valutazioni in corso', drafts.length, week ? `${week} ${week === 1 ? 'aggiornata' : 'aggiornate'} negli ultimi 7 giorni` : 'Nessun aggiornamento recente', '')}
-      ${kpi('Valutazioni validate', valid.length, valid.length ? `Ultima il ${fDate(valid[0].assessment.validatedAt)}` : 'Nessuna validazione', 'ok')}
-      ${kpi('Pazienti censiti', S.patients.length, DOC.centro, 'b')}
-      ${kpi('Follow-up registrati', fu, fuReadyN ? `${fuReadyN} ${fuReadyN === 1 ? 'paziente pronto' : 'pazienti pronti'} per il primo follow-up` : 'Nessun follow-up in attesa', 'b')}
+      ${kpi('Valutazioni in corso', drafts.length, week ? `${week} ${week === 1 ? 'aggiornata' : 'aggiornate'} negli ultimi 7 giorni` : 'Nessun aggiornamento recente', '', 'draft', 'Apri le valutazioni in corso')}
+      ${kpi('Valutazioni validate', valid.length, valid.length ? `Ultima il ${fDate(valid[0].assessment.validatedAt)}` : 'Nessuna validazione', 'ok', 'validated', 'Apri le valutazioni validate')}
+      ${kpi('Pazienti censiti', S.patients.length, DOC.centro, 'b', 'all', 'Apri l’elenco pazienti')}
+      ${kpi('Follow-up registrati', fu, fuReadyN ? `${fuReadyN} ${fuReadyN === 1 ? 'paziente pronto' : 'pazienti pronti'} per il primo follow-up` : 'Nessun follow-up in attesa', 'b', 'fu', 'Apri i pazienti con follow-up')}
     </div>
     <div class="dcards">
       <div class="dhero">
@@ -2464,6 +2472,7 @@ SCREENS.patients.render = function (prm) {
       <div class="dtools">
         <label class="dsearch">${ic('search', 20)}<input data-in="q" placeholder="Cerca per nome o cognome" value="${esc(F.q)}" aria-label="Cerca per nome o cognome"></label>
         <div class="chips" role="tablist" aria-label="Stato della valutazione">${CHIPS.map(([k, l]) => `<button class="chip ${F.chip === k ? 'on' : ''}" data-act="chip" data-k="${k}" role="tab" aria-selected="${F.chip === k}">${l}</button>`).join('')}</div>
+        ${F.fu ? `<button class="fpill" data-act="clearFu" aria-label="Rimuovi il filtro con follow-up">Con follow-up ${ic('close', 16)}</button>` : ''}
         <button class="btn secondary" data-act="filters">${ic('tune', 20)}Filtri${n ? ` <span class="fcount">${n}</span>` : ''}</button>
         <button class="btn primary" data-act="new">${ic('plus', 20)}Censisci nuovo paziente</button>
       </div>
@@ -2471,6 +2480,18 @@ SCREENS.patients.render = function (prm) {
     </div></div>`;
 };
 SCREENS.patients.actions.new = () => openNewPatient();
+/* scorciatoie delle card riepilogo: aprono l’elenco pazienti già filtrato */
+F.fu = false;
+const filterPatientsBase = filterPatients;
+filterPatients = () => filterPatientsBase().filter(p => !F.fu || p.followups.length);
+SCREENS.home.actions.kpi = t => {
+  const go = t.dataset.go;
+  Object.assign(F, { q: '', pat: '', st: '', from: '2026-01-01', to: '', chip: go === 'draft' || go === 'validated' ? go : 'all', fu: go === 'fu' });
+  resetTo([{ name: 'patients', params: {} }], 'fade');
+};
+SCREENS.patients.actions.clearFu = () => { F.fu = false; refresh(); };
+const clearAllBase = SCREENS.patients.actions.clearAll;
+SCREENS.patients.actions.clearAll = (...a) => { F.fu = false; clearAllBase(...a); };
 
 /* ---------- valutazione (bozza o revisione) ---------- */
 SCREENS.assessment.render = function ({ code, review }) {
