@@ -12,7 +12,7 @@
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
-  --page-bg:#ECEEF2; --page-text:#2B2E35; --page-muted:#6B707C; --page-card:#FFFFFF; --page-line:#D9DCE3;
+  --brand-logo:#375ECC; --page-bg:#ECEEF2; --page-text:#2B2E35; --page-muted:#6B707C; --page-card:#FFFFFF; --page-line:#D9DCE3;
   --blue:#375ECC; --blue-d:#2C4FB3; --blue-50:#EEF2FC; --blue-100:#DCE4F8; --bar-base:#AFC0E6;
   --text:#3B3B3B; --muted:#717171; --line:#E2E6F2; --track:#EEF0F5; --ph:#717171; --grab:#B8BFD3; --red2:#C8372D; --bg:#F6F8FF; --white:#FFFFFF;
   --green:#058733; --green-bg:#E7F4EC; --orange:#B3610B; --orange-dot:#CA720E; --orange-bg:#FBF1E6;
@@ -20,9 +20,9 @@
   --ease:cubic-bezier(.2,.8,.2,1);
 }
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){ --page-bg:#15171C; --page-text:#E7E9EE; --page-muted:#9AA0AC; --page-card:#1F2229; --page-line:#2E323B; }
+  :root:not([data-theme="light"]){ --brand-logo:#A9BCF5; --page-bg:#15171C; --page-text:#E7E9EE; --page-muted:#9AA0AC; --page-card:#1F2229; --page-line:#2E323B; }
 }
-:root[data-theme="dark"]{ --page-bg:#15171C; --page-text:#E7E9EE; --page-muted:#9AA0AC; --page-card:#1F2229; --page-line:#2E323B; }
+:root[data-theme="dark"]{ --brand-logo:#A9BCF5; --page-bg:#15171C; --page-text:#E7E9EE; --page-muted:#9AA0AC; --page-card:#1F2229; --page-line:#2E323B; }
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
 body{height:100%;margin:0;background:var(--page-bg);color:var(--page-text);
@@ -34,7 +34,7 @@ input{font:inherit}
 /* ---------- stage + device frame ---------- */
 .stage{height:100%;display:flex;align-items:center;justify-content:center;gap:64px;padding:24px}
 .side{width:300px;flex:none}
-.side .brand{display:flex;align-items:center;gap:10px;color:var(--blue);margin-bottom:6px}
+.side .brand{display:flex;align-items:center;gap:10px;color:var(--brand-logo);margin-bottom:6px}
 .side .brand svg{width:150px;height:auto}
 .side h2{font-size:15px;font-weight:600;margin:0 0 18px;color:var(--page-muted)}
 .side p{font-size:13.5px;line-height:1.55;margin:0 0 12px;max-width:34ch}

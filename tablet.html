@@ -633,7 +633,7 @@ body.full .tscr{width:100%!important;height:100%!important;border-radius:0}
 #screen{--sbw:248px}
 #screen .sb{display:none}
 #screen .nav{display:none!important}
-.dside{position:absolute;left:0;top:0;bottom:0;width:var(--sbw);z-index:20;background:#fff;border-right:1px solid var(--line);border-radius:0 24px 24px 0;box-shadow:4px 0 16px rgba(33,51,115,.04);
+.dside{position:absolute;left:0;top:0;bottom:0;width:var(--sbw);z-index:20;background:#fff;border-right:1px solid var(--line);
   padding:28px 16px 20px;display:none;flex-direction:column;gap:28px;overflow-y:auto}
 #screen.authed .dside{display:flex}
 #screen.authed .view{left:var(--sbw)}
@@ -735,6 +735,15 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
 .dpage{padding:32px 40px 48px;display:flex;flex-direction:column;gap:28px}
 .view[data-screen=patients] .dpage{padding-top:24px;gap:20px}
 .dtop{display:flex;align-items:center;gap:16px}
+.dband{background:var(--blue);color:#fff;padding:32px 40px 36px;display:flex;flex-direction:column;gap:28px}
+.dband .dhello h1{color:#fff}
+.dband .dhello p{color:rgba(255,255,255,.9)}
+.dband .btn.primary{background:#fff;color:var(--blue);border-color:#fff}
+.dband .btn.primary:hover{background:var(--blue-50);border-color:var(--blue-50)}
+.dband :focus-visible{outline-color:#fff;outline-offset:3px}
+.dband .kpi{box-shadow:0 12px 28px -18px rgba(11,21,51,.55)}
+.dband .kpi:hover{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.35),0 12px 28px -14px rgba(11,21,51,.6)}
+.dband+.dpage{padding-top:28px}
 .dhello{flex:1;min-width:0}
 .dhello h1{margin:0;font-size:28px;line-height:34px;font-weight:700}
 .dhello p{margin:4px 0 0;font-size:14px;color:var(--muted)}
@@ -909,6 +918,7 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
   .crumb{padding:0 6px;font-size:13px}
   .body,.dgrid,.wiz{padding-left:24px;padding-right:24px}
   .dpage{padding:24px 24px 36px;gap:24px}
+  .dband{padding:24px 24px 28px;gap:24px}
   .bb{padding:12px 24px}
   .dtop{flex-wrap:wrap}
   .dhello{flex-basis:100%}
@@ -2421,7 +2431,7 @@ SCREENS.home.render = function () {
   const now = new Date(), today = capF(`${GIORNI[now.getDay()]} ${now.getDate()} ${MESI[now.getMonth()]} ${now.getFullYear()}`);
   const week = drafts.filter(p => Date.now() - D(p.assessment.updatedAt) < 7 * 864e5).length;
   const kpi = (l, v, n, dot, go, aria) => `<button class="kpi" data-act="kpi" data-go="${go}" aria-label="${l}: ${v}. ${aria}"><span class="go" aria-hidden="true">${ic('chev', 18)}</span><span class="l"><span class="sdot ${dot}"></span>${l}</span><span class="v">${v}</span><span class="n">${n}</span></button>`;
-  return `<div class="scroll"><div class="dpage">
+  return `<div class="scroll"><div class="dband">
     <div class="dtop">
       <div class="dhello"><h1>${greet()}, ${DOC.name}</h1><p>${DOC.centro} · ${today}</p></div>
       <button class="btn primary" data-act="new">${ic('plus', 20)}Censisci nuovo paziente</button>
@@ -2429,7 +2439,7 @@ SCREENS.home.render = function () {
     <div class="kpis">
       ${kpi('Valutazioni in corso', drafts.length, week ? `${week} ${week === 1 ? 'aggiornata' : 'aggiornate'} negli ultimi 7 giorni` : 'Nessun aggiornamento recente', '', 'draft', 'Apri le valutazioni in corso')}
       ${kpi('Valutazioni validate', valid.length, valid.length ? `Ultima il ${fDate(valid[0].assessment.validatedAt)}` : 'Nessuna validazione', 'ok', 'validated', 'Apri le valutazioni validate')}
-    </div>
+    </div></div><div class="dpage">
     ${dpanel('Valutazioni in corso', drafts.slice(0, 5), drafts.length, 'Aggiornata', 'draft', 'Nessuna valutazione in corso. <button class="link" data-act="new">Censisci un nuovo paziente</button>')}
     ${dpanel('Valutazioni concluse', valid.slice(0, 5), valid.length, 'Validata il', 'validated', 'Le valutazioni validate compariranno qui.')}
   </div></div>`;
