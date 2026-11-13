@@ -633,7 +633,7 @@ body.full .tscr{width:100%!important;height:100%!important;border-radius:0}
 #screen{--sbw:248px}
 #screen .sb{display:none}
 #screen .nav{display:none!important}
-.dside{position:absolute;left:0;top:0;bottom:0;width:var(--sbw);z-index:20;background:#fff;border-right:1px solid var(--line);
+.dside{position:absolute;left:0;top:0;bottom:0;width:var(--sbw);z-index:20;background:#fff;border-right:1px solid var(--line);border-radius:0 24px 24px 0;box-shadow:4px 0 16px rgba(33,51,115,.04);
   padding:28px 16px 20px;display:none;flex-direction:column;gap:28px;overflow-y:auto}
 #screen.authed .dside{display:flex}
 #screen.authed .view{left:var(--sbw)}
@@ -673,7 +673,8 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
 .crumb.cur span{max-width:none}
 .crumb.cur svg{color:var(--blue)}
 .csep{color:#B8BFD3}
-.hdr .trow>.btn.sm{flex:none;align-self:center}
+.hdr .trow>.btn{flex:none;align-self:center}
+.hdr .trow{align-items:center}
 .hdr .trow{margin-top:8px;align-items:flex-end}
 .hdr .top+.trow{margin-top:10px}
 .hdr h1{font-size:28px;line-height:34px}
@@ -714,12 +715,9 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
 .auth{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:#fff}
 .abrand{position:relative;overflow:hidden;background:var(--blue);color:#fff;padding:56px 56px 48px;display:flex;flex-direction:column}
 .abrand .alogo svg{width:200px;height:auto;display:block}
-.abrand h2{font-size:34px;line-height:42px;font-weight:700;letter-spacing:-.5px;margin:auto 0 16px;max-width:15ch;position:relative}
-.abrand p{font-size:15px;line-height:24px;margin:0;max-width:40ch;opacity:.88;position:relative}
-.abrand .afoot{font-size:12px;opacity:.7;margin-top:40px;position:relative}
-.aarc{position:absolute;right:-12%;top:12%;width:88%;pointer-events:none}
-.aarc svg{width:100%;height:auto;display:block;overflow:visible}
-.aarc path{fill:none;stroke:#fff;stroke-width:22}
+.abrand h2{font-size:34px;line-height:42px;font-weight:700;letter-spacing:-.5px;margin:auto 0 0;max-width:15ch;position:relative}
+.amark{position:absolute;right:-6%;top:50%;width:72%;transform:translateY(-58%);color:#fff;opacity:.14;pointer-events:none}
+.amark svg{width:100%;height:auto;display:block}
 .aform{display:grid;place-items:center;padding:48px 40px;overflow-y:auto}
 .ain{width:min(400px,100%);display:flex;flex-direction:column}
 .ain h1{font-size:28px;line-height:34px;font-weight:700;margin:0}
@@ -744,7 +742,7 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
 .dsearch input{flex:1;min-width:0;border:0;outline:0;background:none;color:var(--text);font-size:14px}
 .dsearch input::placeholder{color:var(--ph)}
 .dsearch:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px rgba(55,94,204,.14)}
-.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
 .kpi{position:relative;background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(33,51,115,.06);padding:20px;display:flex;flex-direction:column;gap:8px;
   border:1.5px solid transparent;text-align:left;width:100%;color:var(--text);transition:border-color .2s,box-shadow .2s,transform .2s var(--ease)}
 .kpi .go{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:16px;display:grid;place-items:center;color:var(--blue);background:var(--blue-50);transition:background-color .2s,color .2s,transform .2s var(--ease)}
@@ -813,6 +811,16 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
 .vprog .csegs{margin:0}
 .vpanel .cap2{font-size:12px;line-height:17px;color:var(--muted);margin:-6px 0 0}
 .vpanel .lockline{margin-top:0}
+.card.vpanel{background:var(--blue);color:#fff;box-shadow:0 14px 30px -16px rgba(55,94,204,.6)}
+.vpanel .metaline,.vpanel .lockline,.vpanel .cap2,.vpanel .vprog .between b{color:rgba(255,255,255,.9)}
+.vpanel .vprog .between{color:#fff}
+.vpanel .csegs span{background:rgba(255,255,255,.28)}
+.vpanel .csegs span i{background:#fff}
+.vpanel .badge{border-color:#fff}
+.vpanel .btn.primary{background:#fff;color:var(--blue);border-color:#fff}
+.vpanel .btn.primary:hover{background:var(--blue-50)}
+.vpanel .btn[disabled]{background:transparent;color:#fff;border-color:rgba(255,255,255,.6);opacity:.9}
+.vpanel :focus-visible{outline-color:#fff}
 
 /* =========================================================
    COMPILAZIONE · barra laterale delle sezioni
@@ -843,7 +851,7 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
 .wmain .body.grid2c>.qtitle,.wmain .body.grid2c>.scorebar,.wmain .body.grid2c>.agecard,.wmain .body.grid2c>.opt.none,.wmain .body.grid2c>div:not(.optgroup):not(.field):not(.badlrow){grid-column:1/-1}
 .wmain .body.grid2c>.opt.none{justify-self:start;width:calc(50% - 6px);margin-top:10px}
 .wmain .body.grid2c>.qtitle{margin-bottom:6px}
-.wmain .body.grid2c>.optgroup{grid-row:span 2}
+.wmain .body.grid2c>.optgroup.on{grid-column:1/-1}
 .wmain .body.k-badl{grid-template-columns:1fr}
 .scorebar{background:#fff;border-radius:12px;padding:14px 18px!important;box-shadow:0 2px 8px rgba(33,51,115,.06)}
 .wmain .body.k-status>div:first-child{max-width:520px}
@@ -890,7 +898,7 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
   .dni span,.dwho{display:none}
   .dni{width:52px;justify-content:center;padding:0}
   .duser{padding:6px;background:none;width:auto}
-  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+  .kpis{gap:16px}
   .dsearch{width:220px}
   .dgrid{grid-template-columns:minmax(0,1fr) 280px}
   .wiz{grid-template-columns:220px minmax(0,1fr);gap:24px}
@@ -2341,23 +2349,18 @@ COMMON.crumb = t => {
   }
   back(R.stack.length - 1 - k);
 };
-header = function ({ title, sub, share = false }) {
+header = function ({ title, sub, share = false, action = '' }) {
   return `<header class="hdr">
     <div class="top">${crumbs()}</div>
     <div class="trow"><div><h1>${esc(title)}</h1>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>
-    ${share ? `<button class="iconbtn" data-act="share" aria-label="Condividi">${ic('share', 22)}</button>` : ''}</div></header>`;
+    ${action}${share ? `<button class="iconbtn" data-act="share" aria-label="Condividi">${ic('share', 22)}</button>` : ''}</div></header>`;
 };
 
 /* ---------- accesso ---------- */
-const ARC = (() => { // arco del rischio geriatrico, stessa geometria del grafico dei risultati
-  const f = n => n.toFixed(1), c = { x: 163, y: 120, r: 101.2 }, pt = a => [c.x + c.r * Math.cos(a), c.y + c.r * Math.sin(a)];
-  return `<svg viewBox="40 0 246 140" aria-hidden="true">${GZ.map(([a0, a1], i) => { const [x0, y0] = pt(a0), [x1, y1] = pt(a1);
-    return `<path d="M${f(x0)} ${f(y0)}A${c.r} ${c.r} 0 0 1 ${f(x1)} ${f(y1)}" opacity="${[.22, .12, .07][i]}"/>`; }).join('')}</svg>`;
-})();
-const authBrand = () => `<div class="abrand"><div class="alogo">${LOGO}</div><div class="aarc">${ARC}</div>
-  <h2>Valutazione geriatrica per il paziente cardiologico</h2>
-  <p>Autonomia, stato nutrizionale, performance fisica e comorbidità raccolti in un’unica scheda, con il profilo di rischio calcolato alla validazione.</p>
-  <div class="afoot">Comprehensive Geriatric Assessment for Cardiovascular Disease · App 1.0</div></div>`;
+// la "A" del logo (gamba, curva, tratto interno e coda) come elemento grafico
+const A_MARK = `<svg viewBox="69.4 3.1 38.1 34.7" fill="currentColor" aria-hidden="true">${LOGO.match(/<path[^>]*>/g).slice(7, 11).join('')}</svg>`;
+const authBrand = () => `<div class="abrand"><div class="alogo">${LOGO}</div><div class="amark">${A_MARK}</div>
+  <h2>Valutazione geriatrica per il paziente cardiologico</h2></div>`;
 SCREENS.login.render = () => `<div class="auth">${authBrand()}
   <div class="aform"><div class="ain">
     <h1>Accedi</h1><p class="lead">Inserisci le credenziali fornite dal tuo centro.</p>
@@ -2417,33 +2420,15 @@ SCREENS.home.render = function () {
   const valid = S.patients.filter(p => !isDraft(p)).sort((a, b) => D(b.assessment.validatedAt) - D(a.assessment.validatedAt));
   const now = new Date(), today = capF(`${GIORNI[now.getDay()]} ${now.getDate()} ${MESI[now.getMonth()]} ${now.getFullYear()}`);
   const week = drafts.filter(p => Date.now() - D(p.assessment.updatedAt) < 7 * 864e5).length;
-  const fu = S.patients.filter(p => p.followups.length).length;
-  const fuReadyN = valid.filter(p => !deceased(p) && fuOpen(p) && !p.followups.length).length;
   const kpi = (l, v, n, dot, go, aria) => `<button class="kpi" data-act="kpi" data-go="${go}" aria-label="${l}: ${v}. ${aria}"><span class="go" aria-hidden="true">${ic('chev', 18)}</span><span class="l"><span class="sdot ${dot}"></span>${l}</span><span class="v">${v}</span><span class="n">${n}</span></button>`;
   return `<div class="scroll"><div class="dpage">
     <div class="dtop">
       <div class="dhello"><h1>${greet()}, ${DOC.name}</h1><p>${DOC.centro} · ${today}</p></div>
-      <label class="dsearch">${ic('search', 20)}<input data-in="q" placeholder="Cerca paziente…" aria-label="Cerca paziente per nome o cognome"></label>
       <button class="btn primary" data-act="new">${ic('plus', 20)}Censisci nuovo paziente</button>
     </div>
     <div class="kpis">
       ${kpi('Valutazioni in corso', drafts.length, week ? `${week} ${week === 1 ? 'aggiornata' : 'aggiornate'} negli ultimi 7 giorni` : 'Nessun aggiornamento recente', '', 'draft', 'Apri le valutazioni in corso')}
       ${kpi('Valutazioni validate', valid.length, valid.length ? `Ultima il ${fDate(valid[0].assessment.validatedAt)}` : 'Nessuna validazione', 'ok', 'validated', 'Apri le valutazioni validate')}
-      ${kpi('Pazienti censiti', S.patients.length, DOC.centro, 'b', 'all', 'Apri l’elenco pazienti')}
-      ${kpi('Follow-up registrati', fu, fuReadyN ? `${fuReadyN} ${fuReadyN === 1 ? 'paziente pronto' : 'pazienti pronti'} per il primo follow-up` : 'Nessun follow-up in attesa', 'b', 'fu', 'Apri i pazienti con follow-up')}
-    </div>
-    <div class="dcards">
-      <div class="dhero">
-        <button class="plus2" data-act="new" aria-label="Censisci un nuovo paziente">${ic('plus')}</button>
-        <h3>Censisci un nuovo paziente</h3>
-        <p>Registra un nuovo paziente anonimo per iniziare la valutazione geriatrica.</p>
-        <button class="btn" data-act="new">Inizia ora</button>
-      </div>
-      <div class="guide"><h3>Come funziona</h3>
-        <div class="gstep"><span class="num">1</span><div><b>Censisci il paziente</b><small>Liberatoria, dati anagrafici e patologia di riferimento</small></div></div>
-        <div class="gstep"><span class="num">2</span><div><b>Compila la valutazione</b><small>BADL, MNA-SF, SPPB e dati clinico strumentali</small></div></div>
-        <div class="gstep"><span class="num">3</span><div><b>Valida e monitora</b><small>Profilo di rischio, report e follow-up dopo 24 ore</small></div></div>
-      </div>
     </div>
     ${dpanel('Valutazioni in corso', drafts.slice(0, 5), drafts.length, 'Aggiornata', 'draft', 'Nessuna valutazione in corso. <button class="link" data-act="new">Censisci un nuovo paziente</button>')}
     ${dpanel('Valutazioni concluse', valid.slice(0, 5), valid.length, 'Validata il', 'validated', 'Le valutazioni validate compariranno qui.')}
@@ -2467,14 +2452,13 @@ patientsList = function () {
 SCREENS.patients.render = function (prm) {
   if (prm.chip) { F.chip = prm.chip; delete prm.chip; }
   const n = advCount();
-  return `${header({ title: 'Pazienti', sub: `${S.patients.length} pazienti censiti · ${DOC.centro}` })}
+  return `${header({ title: 'Pazienti', sub: `${S.patients.length} pazienti censiti · ${DOC.centro}`, action: `<button class="btn primary" data-act="new">${ic('plus', 20)}Censisci nuovo paziente</button>` })}
     <div class="scroll"><div class="dpage">
       <div class="dtools">
         <label class="dsearch">${ic('search', 20)}<input data-in="q" placeholder="Cerca per nome o cognome" value="${esc(F.q)}" aria-label="Cerca per nome o cognome"></label>
         <div class="chips" role="tablist" aria-label="Stato della valutazione">${CHIPS.map(([k, l]) => `<button class="chip ${F.chip === k ? 'on' : ''}" data-act="chip" data-k="${k}" role="tab" aria-selected="${F.chip === k}">${l}</button>`).join('')}</div>
         ${F.fu ? `<button class="fpill" data-act="clearFu" aria-label="Rimuovi il filtro con follow-up">Con follow-up ${ic('close', 16)}</button>` : ''}
         <button class="btn secondary" data-act="filters">${ic('tune', 20)}Filtri${n ? ` <span class="fcount">${n}</span>` : ''}</button>
-        <button class="btn primary" data-act="new">${ic('plus', 20)}Censisci nuovo paziente</button>
       </div>
       <section class="panel" role="table" aria-label="Elenco pazienti"><div id="plist">${patientsList()}</div></section>
     </div></div>`;
