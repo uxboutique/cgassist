@@ -719,7 +719,7 @@ button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
 .auth{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:#fff}
 .abrand{position:relative;overflow:hidden;background:var(--blue);color:#fff;padding:56px 56px 48px;display:flex;flex-direction:column}
 .abrand .alogo svg{width:200px;height:auto;display:block}
-.abrand h2{font-size:34px;line-height:42px;font-weight:700;letter-spacing:-.5px;margin:auto 0 0;max-width:17ch;position:relative}
+.abrand h2{font-size:34px;line-height:42px;font-weight:700;letter-spacing:-.5px;margin:auto 0 0;max-width:none;position:relative}
 .amark{position:absolute;right:-6%;top:50%;width:72%;transform:translateY(-58%);color:#fff;opacity:.14;pointer-events:none}
 .amark svg{width:100%;height:auto;display:block}
 .aform{display:grid;place-items:center;padding:48px 40px;overflow-y:auto}
@@ -2375,7 +2375,7 @@ header = function ({ title, sub, share = false, action = '', edit = '' }) {
 // la "A" del logo (gamba, curva, tratto interno e coda) come elemento grafico
 const A_MARK = `<svg viewBox="69.4 3.1 38.1 34.7" fill="currentColor" aria-hidden="true">${LOGO.match(/<path[^>]*>/g).slice(7, 11).join('')}</svg>`;
 const authBrand = () => `<div class="abrand"><div class="alogo">${LOGO}</div><div class="amark">${A_MARK}</div>
-  <h2>Valutazione geriatrica completa per le malattie cardiovascolari</h2></div>`;
+  <h2>Valutazione geriatrica<br>completa per le<br>malattie cardiovascolari</h2></div>`;
 SCREENS.login.render = () => `<div class="auth">${authBrand()}
   <div class="aform"><div class="ain">
     <h1>Accedi</h1><p class="lead">Inserisci le credenziali fornite dal tuo centro.</p>
