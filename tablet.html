@@ -659,6 +659,21 @@ body.full .tscr{width:100%!important;height:100%!important;border-radius:0}
 .back,.saveexit{color:var(--blue);padding:2px 0}
 .back:hover,.saveexit:hover{text-decoration:underline;text-underline-offset:3px}
 .saveexit{margin-left:0}
+/* breadcrumb */
+.crumbs ol{list-style:none;margin:0;padding:6px 8px;display:inline-flex;align-items:center;gap:2px;flex-wrap:wrap;max-width:100%;
+  background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(33,51,115,.04)}
+.crumbs li{display:flex;align-items:center;min-width:0}
+.crumb{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 8px;border-radius:8px;border:0;background:none;
+  font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap;min-width:0}
+.crumb span{overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.crumb svg{flex:none}
+button.crumb:hover{background:var(--blue-50);color:var(--blue)}
+button.crumb:hover span{text-decoration:underline;text-underline-offset:3px}
+.crumb.cur{color:var(--text);font-weight:700}
+.crumb.cur span{max-width:none}
+.crumb.cur svg{color:var(--blue)}
+.csep{color:#B8BFD3}
+.hdr .trow>.btn.sm{flex:none;align-self:center}
 .hdr .trow{margin-top:8px;align-items:flex-end}
 .hdr .top+.trow{margin-top:10px}
 .hdr h1{font-size:28px;line-height:34px}
@@ -874,6 +889,8 @@ body.full .tscr{width:100%!important;height:100%!important;border-radius:0}
 }
 @container app (max-width:900px){
   .hdr{padding:24px 24px 0}
+  .crumb span{max-width:140px}
+  .crumb{padding:0 6px;font-size:13px}
   .body,.dgrid,.wiz{padding-left:24px;padding-right:24px}
   .dpage{padding:24px 24px 36px;gap:24px}
   .bb{padding:12px 24px}
@@ -2277,9 +2294,48 @@ setNav = function (name) {
 };
 
 /* ---------- intestazione di pagina ---------- */
-header = function ({ back: b, title, sub, share = false }) {
+/* breadcrumb: il percorso è la pila di navigazione, ogni livello riporta indietro fino a lì */
+Object.assign(IC, {
+  edit: '<path d="M4.5 19.5h4l10-10-4-4-10 10z"/><path d="M13 7l4 4"/>',
+  chart: '<path d="M4 20h16"/><path d="M7.5 16.5v-5M12 16.5v-9M16.5 16.5v-6.5"/>',
+  trend: '<path d="M4 16.5l5-5 3.5 3.5L20 7.5"/><path d="M15 7.5h5v5"/>'
+});
+function crumbOf(r, i, st) {
+  const p = r.params && r.params.code ? P(r.params.code) : null, prev = st[i - 1];
+  switch (r.name) {
+    case 'home': return ['home', 'Home'];
+    case 'patients': return ['patients', 'Pazienti'];
+    case 'account': return ['user', 'Account'];
+    case 'patient': return ['user', fullName(p)];
+    case 'assessment': return ['listCheck', prev && prev.name === 'patient' ? 'Valutazione baseline' : fullName(p)];
+    case 'step': return ['edit', STEPS[r.params.g][r.params.i].t];
+    case 'results': return ['chart', 'Risultati baseline'];
+    case 'report': return ['doc', 'Report'];
+    case 'comparison': return ['trend', `Follow-up ${r.params.n}`];
+    default: return ['chev', r.name];
+  }
+}
+function crumbs() {
+  const st = R.stack; if (st.length < 2) return '';
+  const sep = `<li class="csep" aria-hidden="true">${ic('chev', 14)}</li>`;
+  return `<nav class="crumbs" aria-label="Percorso"><ol>${st.map((r, i) => {
+    const [icon, label] = crumbOf(r, i, st), last = i === st.length - 1;
+    const inner = `${ic(icon, 18)}<span>${esc(label)}</span>`;
+    return (i ? sep : '') + (last ? `<li><span class="crumb cur" aria-current="page">${inner}</span></li>`
+      : `<li><button class="crumb" data-act="crumb" data-k="${i}" title="${esc(label)}">${inner}</button></li>`);
+  }).join('')}</ol></nav>`;
+}
+COMMON.crumb = t => {
+  const k = +t.dataset.k, top = R.stack[R.stack.length - 1];
+  if (top.name === 'step') { // come "Salva ed esci": ferma il cronometro e salva la sezione
+    const prm = top.params, p = P(prm.code); stopChrono(); markLeave(p, prm.g, STEPS[prm.g][prm.i].k);
+    toast(prm.g === 'fu' ? 'Follow-up salvato in bozza' : isDraft(p) ? 'Bozza salvata' : 'Modifiche salvate');
+  }
+  back(R.stack.length - 1 - k);
+};
+header = function ({ title, sub, share = false }) {
   return `<header class="hdr">
-    <div class="top">${b ? `<button class="back" data-act="${b.act || 'back'}">${ic('back', 16)}${esc(b.label)}</button>` : ''}</div>
+    <div class="top">${crumbs()}</div>
     <div class="trow"><div><h1>${esc(title)}</h1>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>
     ${share ? `<button class="iconbtn" data-act="share" aria-label="Condividi">${ic('share', 22)}</button>` : ''}</div></header>`;
 };
@@ -2461,8 +2517,9 @@ SCREENS.step.render = function ({ code, g, i }) {
       <span class="rn">${state === 'done' && j !== i ? ic('check', 14) : j + 1}</span><span class="rt"><b>${x.t}</b><small>${sub}</small></span></button>`;
   }).join('');
   const cls = [`k-${st.k}`, GRID_STEPS.includes(st.k) ? 'grid2c' : '', ['mna', 'sppb', 'status'].includes(st.k) ? 'g20' : 'g10'].join(' ');
-  return `<header class="hdr"><div class="top"><button class="saveexit" data-act="saveexit">${ic('back', 16)}Salva ed esci</button></div>
-      <div class="trow"><div><h1>${GROUP_LAB[g]}</h1><div class="sub">${esc(fullName(p))} · ${g === 'fu' ? `Follow-up ${p.followups.length + 1}` : 'Valutazione baseline'}</div></div></div></header>
+  return `<header class="hdr"><div class="top">${crumbs()}</div>
+      <div class="trow"><div><h1>${GROUP_LAB[g]}</h1><div class="sub">${esc(fullName(p))} · ${g === 'fu' ? `Follow-up ${p.followups.length + 1}` : 'Valutazione baseline'}</div></div>
+      <button class="btn secondary sm" data-act="saveexit">Salva ed esci</button></div></header>
     <div class="scroll"><div class="wiz">
       <nav class="rail" aria-label="Sezioni di ${GROUP_LAB[g]}">${rail}</nav>
       <div class="wmain">
